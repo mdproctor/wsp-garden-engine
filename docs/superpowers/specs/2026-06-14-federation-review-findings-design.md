@@ -46,7 +46,7 @@ Without this, the resource's config overrides bleed into all `@QuarkusTest` clas
 
 `@QuarkusTestResource` is the correct annotation. `@WithTestResource` (introduced in 3.13) has a standing warning in its Javadoc in 3.36.1: "this annotation caused some issues so it was decided to undeprecate `@QuarkusTestResource`... For now, we recommend not using it."
 
-Replace the inner `FederationTestProfile` class with the test resource. Remove all manual WireMock lifecycle (`@BeforeAll`/`@AfterAll`/`@BeforeEach`).
+Replace the inner `FederationTestProfile` class with the test resource. Remove manual WireMock start/stop lifecycle (`@BeforeAll`/`@AfterAll`). The `@BeforeEach` reset stays — the lifecycle manager handles server lifecycle, not per-test stub cleanup. `wireMock.resetAll()` prevents stubs from one test leaking into the next.
 
 **`federation-test.yaml` stays** — used by `FederationConfigParserTest` which parses files directly without CDI. That test doesn't use WireMock.
 
