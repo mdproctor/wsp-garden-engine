@@ -1,0 +1,9 @@
+branch: issue-7-incremental-reindexing
+project-sha: 228a974bcb385db7a8b670f214962803dc92f0fc
+date: 2026-06-16
+issue: 7
+issue-repo: Hortora/engine
+covers: 7
+flyway-next-v: none
+design-repo: project
+design-section-hashes: a7e56472:##
