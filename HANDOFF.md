@@ -23,7 +23,6 @@ casehubio/parent#255 filed for dependency argumentation graph design — not blo
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
 | — | Phase 2: SPLADE + cross-encoder reranker | L | High | `inference-splade` is Hortora-eligible; extends existing QdrantClient + QueryPoints |
-| — | DirectoryWatcherChangeSource contribution to neural-text | XS | Low | neural-text already migrating to directory-watcher |
 
 ## Key References
 
