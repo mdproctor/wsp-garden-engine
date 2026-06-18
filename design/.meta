@@ -1,0 +1,9 @@
+branch: issue-9-hybrid-search-splade-reranker
+project-sha: 3ad59ad4baf77c31d57c3c7440dc7bc3213ad195
+date: 2026-06-18
+issue: 9
+issue-repo: Hortora/engine
+covers: 9
+flyway-next-v: none
+design-repo: workspace
+design-section-hashes: 
