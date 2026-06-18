@@ -72,28 +72,32 @@ Both require ONNX export as an operator setup step (not baked into the app).
 @ApplicationScoped
 public class HybridSearchProducer {
 
-    @Inject
-    InferenceModelConfig config;
-
     @Produces
     @Singleton
-    @LookupIfProperty(name = "casehub.inference.models.splade.model-path", stringValue = "", lookupIfMissing = false)
+    @LookupIfProperty(name = "casehub.inference.models.splade.model-path",
+                       stringValue = ".+", match = StringValueMatch.REGEX)
     SparseEmbedder sparseEmbedder(@Inference("splade") InferenceModel spladeModel) {
         return new SparseEmbedder(spladeModel);
     }
 
     @Produces
     @Singleton
-    @LookupIfProperty(name = "casehub.inference.models.reranker.model-path", stringValue = "", lookupIfMissing = false)
+    @LookupIfProperty(name = "casehub.inference.models.reranker.model-path",
+                       stringValue = ".+", match = StringValueMatch.REGEX)
     CrossEncoderReranker reranker(@Inference("reranker") InferenceModel rerankerModel) {
         return new CrossEncoderReranker(rerankerModel);
     }
 }
 ```
 
-**CDI conditional registration:** `@LookupIfProperty` (Quarkus ArC) makes the bean genuinely non-resolvable when the config property is absent. `Instance<SparseEmbedder>.isResolvable()` returns `false` when SPLADE is not configured — a clean signal to `RagBeanProducer`. No null beans.
+**CDI conditional registration:** `@LookupIfProperty` with `StringValueMatch.REGEX` and pattern `.+` makes the bean resolvable only when the property exists AND has a non-empty value. `Instance<SparseEmbedder>.isResolvable()` returns `false` when SPLADE is not configured — a clean signal to `RagBeanProducer`. No null beans.
 
-**Note:** `@LookupIfProperty` with `lookupIfMissing = false` means the bean is resolvable only when the property EXISTS (any value). The `stringValue = ""` with `lookupIfMissing = false` effectively means "property must be present" — the empty-string match is the default/fallback behavior. Verify this during TDD; if the semantics don't match, use a boolean enablement property (`hortora.inference.splade.enabled=true`) instead.
+Semantics verified from `LookupIfProperty.java` and `StringValueMatch.java` in quarkus-arc 3.36.1:
+- Property absent → not resolvable (`lookupIfMissing` defaults to `false`)
+- Property empty → not resolvable (doesn't match `.+`)
+- Property set to a real path → resolvable (matches `.+`)
+
+Since `@LookupIfProperty` prevents resolution when unconfigured, `InferenceModelProducer.createModel("splade")` is never called and never throws.
 
 **Lifecycle:** Model loading and cleanup are handled by `InferenceModelProducer` in inference-quarkus (ConcurrentHashMap pool + ShutdownEvent). The engine's bridge producer owns no lifecycle.
 
@@ -105,17 +109,29 @@ Strategy: force a full re-index on first hybrid-enabled startup.
 
 ### Detection Mechanism
 
-`CollectionMigration` queries the Qdrant collection schema via `QdrantClient.getCollectionInfoAsync(collectionName)`. The response's `CollectionInfo` → `getConfig()` → `getParams()` → `getSparseVectorsConfig()` → `getMapMap()` tells whether the collection has a sparse vector space. If the collection exists but the sparse vectors map is empty, and `SparseEmbedder` is resolvable in CDI, migration is needed.
+`CollectionMigration` queries the Qdrant collection schema via `QdrantClient.getCollectionInfoAsync(collectionName)`. The response chain: `CollectionInfo` → `getConfig()` → `getParams()` → `hasSparseVectorsConfig()` — a direct protobuf presence check. For collections created without sparse vectors, this returns `false`. No need to navigate into the default instance or check map emptiness.
 
 This is stateless detection — no marker files, no persistent flags. The collection schema IS the state.
 
+### Injection Dependencies
+
+| Dependency | Why |
+|------------|-----|
+| `Instance<SparseEmbedder>` | Check `.isResolvable()` — is SPLADE newly available? |
+| `QdrantClient` | Schema introspection via `getCollectionInfoAsync()` |
+| `RagConfig` | `tenancyStrategy()` to derive collection name from `CorpusRef` |
+| `GardenConfig` | `id()` to build `CorpusRef("hortora", gardenConfig.id())` and as cursor binding name |
+| `EmbeddingIngestor` | `deleteCorpus(corpusRef)` to drop the dense-only collection |
+| `CursorStore` | `save(bindingName, "")` to reset the ingestion cursor |
+
 ### Migration Steps
 
-`CollectionMigration` — observes `StartupEvent` with `@Priority(10)` (before `CorpusIngestionService.onStart()` which has default priority):
+`CollectionMigration` — observes `StartupEvent` with `@Priority(10)` (before `CorpusIngestionService.onStart()` which has default priority 2500):
 
 1. Checks `Instance<SparseEmbedder>.isResolvable()` — if false, no-op
-2. Checks whether collection exists and lacks sparse vector space (schema introspection)
-3. If migration needed: deletes the collection via `EmbeddingIngestor.deleteCorpus(corpusRef)` and resets the ingestion cursor via `CursorStore.save(bindingName, "")` — `FileCursorStore.load()` treats empty content as `Optional.empty()`, triggering `fullScan()` on next poll
+2. Derives collection name from `CorpusRef` via `RagConfig.tenancyStrategy()`
+3. Checks whether collection exists and lacks sparse vector space: `!params.hasSparseVectorsConfig()`
+4. If migration needed: deletes the collection via `EmbeddingIngestor.deleteCorpus(corpusRef)` and resets the ingestion cursor via `CursorStore.save(bindingName, "")` — `FileCursorStore.load()` treats empty content as `Optional.empty()`, triggering `fullScan()` on next poll
 
 The cursor reset via empty-string save is a workaround that couples to `FileCursorStore`'s implementation. `CursorStore.delete()` is the right API — filed as casehubio/neural-text#38. Use the workaround until that ships.
 
@@ -145,7 +161,7 @@ Uses `casehub-inference-inmem` (`InMemoryInferenceModel`) — deterministic stub
 - Collection doesn't exist + SparseEmbedder resolvable → no-op
 - SparseEmbedder not resolvable → no-op regardless of collection state
 
-Uses mock `QdrantClient` / `EmbeddingIngestor` / `CursorStore` to verify the decision logic without a real Qdrant instance.
+Uses mock `QdrantClient`, `EmbeddingIngestor`, `CursorStore`, `RagConfig`, `GardenConfig`, and `Instance<SparseEmbedder>` to verify the decision logic without a real Qdrant instance.
 
 **Existing tests unchanged** — `SearchResourceTest`, `FederationIntegrationTest`, etc. continue using `TestCaseRetriever` / `TestEmbeddingIngestor` stubs. These test engine search/federation logic, not the retrieval pipeline.
 
