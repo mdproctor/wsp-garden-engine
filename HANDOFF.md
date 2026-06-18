@@ -1,16 +1,16 @@
 # Hortora engine — Project Handoff
 
-*Last updated: 2026-06-17*
+*Last updated: 2026-06-18*
 
 ---
 
 ## What's In Flight
 
-Nothing — main is clean, no open branches with pending work.
+Nothing — main is clean, #8 closed.
 
 ## Immediate Next Step
 
-Pick up Phase 2: SPLADE + cross-encoder reranker. The incremental re-indexing infrastructure is in place — `QdrantClient` with named `"dense"` vectors, `QueryPoints` API, `casehub-corpus` change detection. Phase 2 extends this by adding `inference-splade` (Hortora-eligible from casehub-neural-text), a `"sparse"` vector to the collection schema, and `PrefetchQuery` legs with RRF fusion in `SearchResource`.
+Pick up Phase 2: SPLADE sparse embeddings. The engine now delegates to neural-text's `casehub-rag` — adding SPLADE is just providing a `SparseEmbedder` CDI bean (neural-text already supports optional sparse via `Instance<>`). No engine code changes needed beyond adding the `inference-splade` dependency and a bean producer.
 
 ## Cross-Module
 
@@ -22,14 +22,13 @@ casehubio/parent#255 filed for dependency argumentation graph design — not blo
 
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
-| — | Phase 2: SPLADE + cross-encoder reranker | L | High | `inference-splade` is Hortora-eligible; extends existing QdrantClient + QueryPoints |
+| — | Phase 2: SPLADE + cross-encoder reranker | M | Med | Simpler now — just add `SparseEmbedder` bean; neural-text `casehub-rag` handles hybrid search |
 
 ## Key References
 
 | Resource | Location |
 |---|---|
-| Engine spec (incremental re-indexing) | `docs/superpowers/specs/2026-06-16-incremental-reindexing-design.md` |
-| Engine plan | `docs/superpowers/plans/2026-06-16-incremental-reindexing.md` |
+| neural-text enablement issue | `casehubio/neural-text#35` |
 | Engine design | `docs/DESIGN.md` |
 | Qdrant client protocol | `casehub/garden: docs/protocols/universal/qdrant-client-library.md` |
 | FS watching protocol | `casehub/garden: docs/protocols/universal/filesystem-watching-library.md` |
