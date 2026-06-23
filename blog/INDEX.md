@@ -7,3 +7,4 @@
 | [2026-06-14-mdp01-federation-review-findings.md](2026-06-14-mdp01-federation-review-findings.md) | 2026-06-14 | Five review findings, two real bugs, and a type bridge |
 | [2026-06-16-mdp01-incremental-reindexing.md](2026-06-16-mdp01-incremental-reindexing.md) | 2026-06-16 | Tearing out the abstraction layer and finding the platform underneath |
 | [2026-06-18-mdp01-hybrid-search-extension.md](2026-06-18-mdp01-hybrid-search-extension.md) | 2026-06-18 | The extension you already built |
+| [2026-06-23-mdp01-audit-fixes.md](2026-06-23-mdp01-audit-fixes.md) | 2026-06-23 | The audit that fixed what we'd left behind |
