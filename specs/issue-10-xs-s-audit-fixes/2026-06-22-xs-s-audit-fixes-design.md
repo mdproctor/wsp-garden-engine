@@ -35,7 +35,7 @@ Issues are not independent. Required sequence:
 
 **Fix:** Normalize line endings at parse boundary: `text = text.replace("\r\n", "\n")` before splitting. One line in each class.
 
-**Code fix — malformed YAML:** `GardenMetadataExtractor.extract()` line 35 calls `new Yaml().load(frontmatterBlock)` with no exception handling. Malformed YAML throws `YAMLException` that propagates uncaught. Wrap in try-catch returning `new ExtractionResult("", Map.of())` on `YAMLException`.
+**Code fix — unparseable frontmatter:** `GardenMetadataExtractor.extract()` line 35 calls `new Yaml().load(frontmatterBlock)` with no exception handling. Two failure modes: malformed YAML throws `YAMLException`; structurally valid YAML that isn't a mapping (a scalar like `42`, a list like `- foo`, a bare string) throws `ClassCastException` on assignment to `Map<String, Object>`. Both are realistic in user-authored garden entries. Wrap in `catch (Exception e)` returning `new ExtractionResult("", Map.of())` — this is a system boundary parsing external content, so catching broadly is appropriate. Unparseable frontmatter → empty ExtractionResult, regardless of how it fails.
 
 **Tests to add (GardenMetadataExtractor):**
 
