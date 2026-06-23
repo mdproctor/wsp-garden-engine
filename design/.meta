@@ -1,0 +1,9 @@
+branch: issue-20-drop-native-image
+project-sha: caf23bc42646ebbcd79a47f28c8c42b17a599774
+date: 2026-06-23
+issue: 20
+issue-repo: Hortora/engine
+covers: 20
+flyway-next-v: unknown
+design-repo: project
+design-section-hashes: 
