@@ -1,16 +1,16 @@
 # Hortora engine — Project Handoff
 
-*Last updated: 2026-06-23*
+*Updated: #19, #20 closed — removed from backlog. #21 filed.*
 
 ---
 
 ## What's In Flight
 
-Nothing — main is clean, #10–#18 closed.
+#21 — garden MCP skill integration. Spec approved, implementation plan next.
 
 ## Immediate Next Step
 
-Hybrid search dev setup: run `scripts/download-models.sh` to download ONNX models, uncomment the `%dev` model paths in `application.properties`, start Qdrant (`docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant`), then `./mvnw quarkus:dev`. `CollectionMigration` detects the dense-only collection and triggers a full re-index automatically when SPLADE is newly enabled.
+Invoke writing-plans for #21 to create the implementation plan, then `/work` to start.
 
 ## Cross-Module
 
@@ -22,20 +22,18 @@ Hybrid search dev setup: run `scripts/download-models.sh` to download ONNX model
 
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
-| 19 | Add SHA-256 checksum verification to download-models.sh | XS | Low | Filed from code review on #18; checksums captured after first download |
-| — | Native image validation — ONNX Runtime JNI in GraalVM native | M | High | neural-text C2 gate passed; reachability metadata ships in inference-quarkus. neural-text itself is JVM-by-design (long-running service). Hortora e2e native validation still needed if engine continues deploying as native binary. |
+| 21 | Garden MCP skill integration — gardenSearch as primary retrieval for skills | M | Med | Spec approved. Engine output enrichment + skill diffs. |
+| — | Native image for future CLI client | M | High | Engine is JVM-by-design (#20). Native image only relevant for future Hortora CLI client (fast startup, single binary). inference-quarkus reachability metadata available. |
 
 ## Key References
 
 | Resource | Location |
 |---|---|
-| Audit fixes spec | `specs/issue-10-xs-s-audit-fixes/2026-06-22-xs-s-audit-fixes-design.md` |
-| Implementation plan | `docs/superpowers/plans/2026-06-23-xs-s-audit-fixes.md` |
+| Garden MCP integration spec | `docs/superpowers/specs/2026-06-23-garden-mcp-skill-integration-design.md` |
 | Hybrid search spec | `docs/superpowers/specs/2026-06-18-hybrid-search-splade-reranker.md` |
 | Engine design | `docs/DESIGN.md` |
 | CRLF test fixture gotcha | `GE-20260623-aeda6f` (garden) |
 | SPLADE licensing gotcha | `GE-20260614-b94048` (garden) |
 | CDI @Nonbinding gotcha | `GE-20260618-397bf7` (garden) |
 | CursorStore.delete() issue | `casehubio/neural-text#38` |
-| Checksum follow-up | `Hortora/engine#19` |
 | Open issues | `gh issue list --repo Hortora/engine` |
