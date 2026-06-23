@@ -1,0 +1,9 @@
+branch: issue-19-sha256-checksum-verify
+project-sha: 600962c8cbf73a38e13a7cb8d01008617dd1b12d
+date: 2026-06-23
+issue: 19
+issue-repo: Hortora/engine
+covers: 19
+flyway-next-v: unknown
+design-repo: project
+design-section-hashes: 
