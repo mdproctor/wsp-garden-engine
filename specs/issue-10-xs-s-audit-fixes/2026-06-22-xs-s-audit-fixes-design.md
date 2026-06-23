@@ -35,14 +35,19 @@ Issues are not independent. Required sequence:
 
 **Fix:** Normalize line endings at parse boundary: `text = text.replace("\r\n", "\n")` before splitting. One line in each class.
 
+**Code fix — malformed YAML:** `GardenMetadataExtractor.extract()` line 35 calls `new Yaml().load(frontmatterBlock)` with no exception handling. Malformed YAML throws `YAMLException` that propagates uncaught. Wrap in try-catch returning `new ExtractionResult("", Map.of())` on `YAMLException`.
+
 **Tests to add (GardenMetadataExtractor):**
-- CRLF frontmatter — file with `---\r\n` delimiters parses correctly (verifies the fix)
-- Malformed YAML between `---` delimiters — expect empty `Optional` (not unhandled `YamlException`)
+
+All CRLF test content must be constructed programmatically in the test (e.g. `"---\r\ntitle: test\r\n---\r\nbody".getBytes()`), not loaded from fixture files. Git's `core.autocrlf` or `.gitattributes` can silently normalize `\r\n` to `\n` on checkout, making a file-based CRLF test pass without the fix.
+
+- CRLF frontmatter — content with `---\r\n` delimiters parses correctly, returns `ExtractionResult` with expected body and metadata (verifies the fix)
+- Malformed YAML between `---` delimiters — expect `ExtractionResult` with empty body (verifies the try-catch fix, not unhandled `YAMLException`)
 - Missing `title` field in frontmatter — verify content still extracted without title prefix
-- Unclosed frontmatter (starts with `---`, no closing `---`) — expect empty `Optional`
+- Unclosed frontmatter (starts with `---`, no closing `---`) — expect `ExtractionResult` with empty body (verifies existing behaviour at line 28-29)
 
 **Tests to add (FederationConfigParser):**
-- CRLF SCHEMA.md fixture — `---\r\n` delimited frontmatter parses to valid `FederationConfig` (verifies the fix)
+- CRLF SCHEMA.md — construct content programmatically with `\r\n` line endings, write to `@TempDir`, parse and verify valid `FederationConfig` (verifies the fix; immune to git line-ending normalisation)
 
 ---
 
@@ -79,6 +84,8 @@ Issues are not independent. Required sequence:
 Add `federationTimeoutSeconds` to `FederationConfig` record. Wire through `FederationConfigParser` (parse from SCHEMA.md `federation:` block, key `timeout-seconds`, default 5). Use in `ChainWalker`:
 - `buildClient()`: `readTimeout(config.federationTimeoutSeconds(), TimeUnit.SECONDS)`
 - `walk()`: `executor.invokeAll(peerCalls, config.federationTimeoutSeconds(), TimeUnit.SECONDS)`
+
+**Operator note — upstream sequential latency:** `federationTimeoutSeconds` is a per-request timeout, not a total federation timeout. Upstream gardens are queried sequentially in declared order. Worst-case upstream latency = N upstream × timeout (e.g. 2 upstream × 5s = 10s). Peer fan-out is parallel, so worst-case peer latency = timeout (not N × timeout). Document this in SCHEMA.md's federation section.
 
 ---
 
@@ -121,7 +128,7 @@ Adopt `casehub-rag-testing` stubs. Delete engine's hand-written `TestCaseRetriev
 
 **Rationale:**
 - PLATFORM.md cross-repo dependency map explicitly documents `casehub-rag-testing` as providing stubs for Hortora/engine
-- `InMemoryCaseRetriever` and `InMemoryEmbeddingIngestor` are `@Alternative @Priority(1)` — activate by classpath presence (already on test classpath)
+- `InMemoryCaseRetriever` and `InMemoryEmbeddingIngestor` are `@Alternative @Priority(1)` — activate automatically in Quarkus (no `beans.xml` required). This is a Quarkus-specific behaviour: standard CDI requires explicit `@Alternative` enablement via `beans.xml`, but Quarkus globally enables alternatives that carry `@Priority`. Already on the test classpath via `casehub-rag-testing` dependency.
 - `PayloadFilter.matches()` logic is duplicated identically between `TestCaseRetriever` and `InMemoryCaseRetriever`
 - Ingest-then-retrieve is a more realistic test pattern than hardcoded constructor fixtures
 
