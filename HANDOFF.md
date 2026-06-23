@@ -23,7 +23,7 @@ Hybrid search dev setup: run `scripts/download-models.sh` to download ONNX model
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
 | 19 | Add SHA-256 checksum verification to download-models.sh | XS | Low | Filed from code review on #18; checksums captured after first download |
-| — | Native image validation — ONNX Runtime JNI in GraalVM native | M | High | Depends on neural-text Epic 2; inference-quarkus ships reachability metadata but e2e native gate not yet confirmed |
+| — | Native image validation — ONNX Runtime JNI in GraalVM native | M | High | neural-text C2 gate passed; reachability metadata ships in inference-quarkus. neural-text itself is JVM-by-design (long-running service). Hortora e2e native validation still needed if engine continues deploying as native binary. |
 
 ## Key References
 
