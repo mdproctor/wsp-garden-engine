@@ -1,39 +1,39 @@
 # Hortora engine — Project Handoff
 
-*Updated: #19, #20 closed — removed from backlog. #21 filed.*
+*Updated: 2026-06-24 — #19, #20, #21 closed.*
 
 ---
 
 ## What's In Flight
 
-#21 — garden MCP skill integration. Spec approved, implementation plan next.
+Nothing — main is clean. All open issues closed this session.
 
 ## Immediate Next Step
 
-Invoke writing-plans for #21 to create the implementation plan, then `/work` to start.
+E2e verification of garden MCP integration: start the engine against the real garden, configure Claude Code MCP (`hortora-garden` SSE server at `localhost:8080/mcp/sse`), run a skill session and verify `gardenSearch` returns semantically relevant results with enriched metadata (entry IDs, domain, type, relevance). This was Task 5 of #21 — deferred because it requires running infrastructure.
 
 ## Cross-Module
 
-**neural-text commit:** `188a633` on `casehubio/neural-text` main — added `@Inject` to `InMemoryCaseRetriever` constructor for Quarkus CDI compatibility (needed when class has multiple constructors). This was required for engine's test double reconciliation (#16).
-
 **casehubio/neural-text#38** filed for `CursorStore.delete()` — clean cursor reset API. Not blocking; workaround in place.
+
+**soredium commit:** `ca2d2fe` — work-start Step 3b and forage SEARCH updated to call `gardenSearch` MCP tool with git grep fallback.
+
+**garden repo commit:** `9e097da` — YAML frontmatter added to 6 approach docs for engine indexing.
 
 ## What's Next
 
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
-| 21 | Garden MCP skill integration — gardenSearch as primary retrieval for skills | M | Med | Spec approved. Engine output enrichment + skill diffs. |
-| — | Native image for future CLI client | M | High | Engine is JVM-by-design (#20). Native image only relevant for future Hortora CLI client (fast startup, single binary). inference-quarkus reachability metadata available. |
+| — | E2e verification of garden MCP | S | Low | Start engine + Qdrant + Ollama, configure Claude Code MCP, verify gardenSearch in a live session |
+| — | Update superpowers plugin skills | S | Low | brainstorming, systematic-debugging, code-review, java-dev/python-dev/ts-dev need garden consultation blocks (spec has exact diffs) |
+| — | Native image for future CLI client | M | High | Engine is JVM-by-design (#20). inference-quarkus reachability metadata available. |
 
 ## Key References
 
 | Resource | Location |
 |---|---|
 | Garden MCP integration spec | `docs/superpowers/specs/2026-06-23-garden-mcp-skill-integration-design.md` |
-| Hybrid search spec | `docs/superpowers/specs/2026-06-18-hybrid-search-splade-reranker.md` |
+| Implementation plan | `docs/superpowers/plans/2026-06-23-garden-mcp-skill-integration.md` |
 | Engine design | `docs/DESIGN.md` |
-| CRLF test fixture gotcha | `GE-20260623-aeda6f` (garden) |
-| SPLADE licensing gotcha | `GE-20260614-b94048` (garden) |
-| CDI @Nonbinding gotcha | `GE-20260618-397bf7` (garden) |
 | CursorStore.delete() issue | `casehubio/neural-text#38` |
 | Open issues | `gh issue list --repo Hortora/engine` |
