@@ -1,0 +1,9 @@
+branch: issue-23-garden-mcp-e2e-skill-migration
+project-sha: aaee1244d0fddfdb47e45873e85e6af33712ccef
+date: 2026-06-24
+issue: 23
+issue-repo: Hortora/engine
+covers: 23
+flyway-next-v: unknown
+design-repo: workspace
+design-section-hashes: 
