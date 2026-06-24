@@ -26,7 +26,6 @@ E2e verification of garden MCP integration: start the engine against the real ga
 |---|-------------|-------|------------|-------|
 | — | E2e verification of garden MCP | S | Low | Start engine + Qdrant + Ollama, configure Claude Code MCP, verify gardenSearch in a live session |
 | — | Update superpowers plugin skills | S | Low | brainstorming, systematic-debugging, code-review, java-dev/python-dev/ts-dev need garden consultation blocks (spec has exact diffs) |
-| — | Native image for future CLI client | M | High | Engine is JVM-by-design (#20). inference-quarkus reachability metadata available. |
 
 ## Key References
 
