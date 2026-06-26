@@ -1,0 +1,9 @@
+branch: issue-27-real-world-benchmark
+project-sha: 4ff945ab2bffd5bf8e587359b38aa92c2d3f97d7
+date: 2026-06-26
+issue: 27
+issue-repo: Hortora/engine
+covers: 27
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
