@@ -1,6 +1,6 @@
 # Hortora engine — Project Handoff
 
-*Updated: 2026-06-26 — #23 closed, #25 closed, #26 closed.*
+*Updated: 2026-06-26 — #21 closed, #23 closed, #25 closed, #26 closed; casehubio/neural-text#38 closed — removed from backlog.*
 
 ---
 
@@ -26,7 +26,7 @@ Real-world benchmark (#27): pick actual GitHub issues across casehub repos, comp
 
 **soredium:** `9103132` — gardenSearch consultation blocks in code-review and *-dev skills.
 
-**casehubio/neural-text#38** — `CursorStore.delete()` clean cursor reset API. Still open.
+**casehubio/neural-text#38** — `CursorStore.delete()` clean cursor reset API. ✅ Closed.
 
 ## What's Next
 
@@ -39,7 +39,7 @@ Real-world benchmark (#27): pick actual GitHub issues across casehub repos, comp
 
 - **Startup thread embedding** — `doProcessBinding` on `@Observes StartupEvent` calls `embedAll` via the Vert.x REST client on the main thread. Works but may be fragile. Watcher callback path (different thread) works reliably.
 - **Cursor checkpoint overwrite** — `checkpointCursors` timer saves watcher state even when initial scan failed. Workaround: delete cursor file and restart.
-- **DESIGN.md stale** — still says `garden_search` + `garden_status`; actual tool names are `gardenSearch` + `gardenStatus` + `gardenReindex`. Pre-existing from #21.
+- **DESIGN.md stale** — still says `garden_search` + `garden_status`; actual tool names are `gardenSearch` + `gardenStatus` + `gardenReindex`. (#21 now closed — may already be fixed; verify.)
 
 ## Key References
 
