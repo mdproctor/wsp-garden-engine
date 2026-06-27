@@ -1,6 +1,6 @@
 # Hortora engine — Project Handoff
 
-*Updated: 2026-06-26 — #21 closed, #23 closed, #25 closed, #26 closed; casehubio/neural-text#38 closed — removed from backlog.*
+*Updated: 2026-06-28 — #27 closed.*
 
 ---
 
@@ -10,44 +10,42 @@ Nothing — main is clean.
 
 ## Immediate Next Step
 
-Real-world benchmark (#27): pick actual GitHub issues across casehub repos, compare gardenSearch vs grep on each. The synthetic benchmark proved the value proposition; #27 tests it against the actual workflow.
+SPLADE hybrid benchmark (#28): re-run the #27 benchmark with ONNX models enabled. Same 6 issues, same 2 specs, same queries — measure the delta. Enable ONNX model paths in `application.properties`, verify `CollectionMigration` triggers re-indexing, run benchmark.
 
 ## What Changed This Session
 
-- **E2E verification complete** — engine indexes 1,949 points from the garden corpus via Ollama `nomic-embed-text`. Benchmark report at `docs/comparison/garden-search-vs-grep.md`.
-- **Skill migration done** — `code-review/{java,python,typescript}.md` and `{java-dev,python-dev,ts-dev}/SKILL.md` updated in soredium with gardenSearch + git grep fallback.
-- **@QuarkusMain fix** — `NativeImageGateCommand` in `casehub-inference-quarkus` hijacked consuming apps. Fixed in neural-text (`cf7f381`).
-- **Chunking config** — recursive document splitting (6000 chars, 500 overlap) for large approach files exceeding `nomic-embed-text`'s 2048-token context.
-- **3 garden entries** — @QuarkusMain hijack (GE-20260626-dd667c), Ollama context-length 400 (GE-20260626-773613), cursor checkpoint overwrite (GE-20260626-15a2e1).
+- **Real-world benchmark complete** (#27) — gardenSearch vs grep across 14 scenarios (6 issues, 8 spec domains). Result: 6-6-2 split. Neither method dominates. Report at `docs/comparison/real-world-benchmark.md`.
+- **Key finding:** `nomic-embed-text` treats Java class names and CDI annotations as generic tokens. gardenSearch with keywords lost 12/14 scenarios. NL queries recovered to competitive precision (62% vs grep's 65%).
+- **Migration reframed:** gardenSearch is not a grep replacement — it's a complement. Two-method approach: NL queries for concepts, grep for API names.
+- **Garden entry:** GE-20260627-4712de — embedding vocabulary gap gotcha.
+- **Follow-up issues created:** #28 (SPLADE hybrid benchmark), #29 (complementary retrieval), casehubio/neural-text#46 (SPLADE/reranker tuning).
 
 ## Cross-Module
 
-**neural-text:** `@QuarkusMain` removed from `NativeImageGateCommand` (`cf7f381`). Batching added to `QdrantEmbeddingIngestor`. Both on main, need push to blessed repo.
+**casehubio/neural-text#46** — SPLADE model quality and RRF fusion weight tuning. Blocked on #28 results. If SPLADE doesn't fix the keyword catastrophe, neural-text needs model evaluation work.
 
-**soredium:** `9103132` — gardenSearch consultation blocks in code-review and *-dev skills.
-
-**casehubio/neural-text#38** — `CursorStore.delete()` clean cursor reset API. ✅ Closed.
+**neural-text (prior session, still pending):** `@QuarkusMain` fix and batching on local main — need push to blessed repo.
 
 ## What's Next
 
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
-| #27 | Real-world benchmark — gardenSearch vs grep on actual issues | M | Med | Next priority |
+| #28 | SPLADE hybrid benchmark — reproduce #27 with sparse+dense | M | Med | Next priority — Track 1 |
+| #29 | Complementary retrieval capabilities | L | High | Track 2 — blocked on #28 |
 | #24 | Retrieval frequency tracking for garden entries | M | Med | Usage-based curation |
 
 ## Known Issues
 
-- **Startup thread embedding** — `doProcessBinding` on `@Observes StartupEvent` calls `embedAll` via the Vert.x REST client on the main thread. Works but may be fragile. Watcher callback path (different thread) works reliably.
-- **Cursor checkpoint overwrite** — `checkpointCursors` timer saves watcher state even when initial scan failed. Workaround: delete cursor file and restart.
-- **DESIGN.md stale** — still says `garden_search` + `garden_status`; actual tool names are `gardenSearch` + `gardenStatus` + `gardenReindex`. (#21 now closed — may already be fixed; verify.)
+*Unchanged — `git show HEAD~1:HANDOFF.md`*
 
 ## Key References
 
 | Resource | Location |
 |---|---|
-| E2E verification spec | `docs/superpowers/specs/2026-06-24-garden-e2e-verification-and-skill-migration-design.md` |
-| Implementation plan | `docs/superpowers/plans/2026-06-25-garden-e2e-and-skill-migration.md` |
-| Benchmark report | `docs/comparison/garden-search-vs-grep.md` |
-| Blog entry | `blog/2026-06-26-mdp01-grep-firehose-vs-ranked-answers.md` |
+| Real-world benchmark report | `docs/comparison/real-world-benchmark.md` |
+| Benchmark design spec | `docs/superpowers/specs/2026-06-26-real-world-benchmark-design.md` |
+| Synthetic benchmark report | `docs/comparison/garden-search-vs-grep.md` |
+| Blog — vocabulary gap | `blog/2026-06-27-mdp01-embedding-vocabulary-gap.md` |
+| Blog — grep firehose | `blog/2026-06-26-mdp01-grep-firehose-vs-ranked-answers.md` |
 | Engine design | `docs/DESIGN.md` |
 | Open issues | `gh issue list --repo Hortora/engine` |
