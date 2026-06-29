@@ -1,0 +1,9 @@
+branch: issue-29-complementary-retrieval
+project-sha: 771f512868f411ed1dcecf00274958b954d9788b
+date: 2026-06-29
+issue: 29
+issue-repo: Hortora/engine
+covers: 29
+flyway-next-v: none
+design-repo: workspace
+design-section-hashes: 
