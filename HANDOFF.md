@@ -1,6 +1,6 @@
 # Hortora engine — Project Handoff
 
-*Updated: 2026-06-28 — #27 closed.*
+*Updated: 2026-06-29 — #28 closed.*
 
 ---
 
@@ -10,28 +10,38 @@ Nothing — main is clean.
 
 ## Immediate Next Step
 
-SPLADE hybrid benchmark (#28): re-run the #27 benchmark with ONNX models enabled. Same 6 issues, same 2 specs, same queries — measure the delta. Enable ONNX model paths in `application.properties`, verify `CollectionMigration` triggers re-indexing, run benchmark.
+Pick up neural-text work: #47 (Qdrant full-text index) is the highest priority — it's the foundation for BM25 keyword matching, the most direct fix for the keyword catastrophe. Start there.
 
 ## What Changed This Session
 
-- **Real-world benchmark complete** (#27) — gardenSearch vs grep across 14 scenarios (6 issues, 8 spec domains). Result: 6-6-2 split. Neither method dominates. Report at `docs/comparison/real-world-benchmark.md`.
-- **Key finding:** `nomic-embed-text` treats Java class names and CDI annotations as generic tokens. gardenSearch with keywords lost 12/14 scenarios. NL queries recovered to competitive precision (62% vs grep's 65%).
-- **Migration reframed:** gardenSearch is not a grep replacement — it's a complement. Two-method approach: NL queries for concepts, grep for API names.
-- **Garden entry:** GE-20260627-4712de — embedding vocabulary gap gotcha.
-- **Follow-up issues created:** #28 (SPLADE hybrid benchmark), #29 (complementary retrieval), casehubio/neural-text#46 (SPLADE/reranker tuning).
+- **SPLADE hybrid benchmark complete** (#28) — diagnostic benchmark across 14 real-world scenarios with three configs (dense-only, dense+SPLADE, full-hybrid). Key findings:
+  - SPLADE (`Splade_PP_en_v1`) has zero Java domain vocabulary — expands `ChatModel` to "hotel, beauty, renovation"
+  - Two ONNX integration gaps blocked startup (neural-text #51 input names, #52 output rank) — workarounds applied
+  - Full hybrid crashed after one query (cross-encoder +170ms overhead)
+  - KW embedding instability: 76% result drift from 1.2% corpus growth
+  - Dense+SPLADE latency: +15ms overhead, result quality ambiguous (removed noise but displaced 3 score-2 entries)
+- **Six neural-text issues filed** (#47-52) covering: full-text index, BM25 retrieval leg, code-domain model eval, payload indexes, ONNX input naming, ONNX output rank
+- **Three garden entries** — KW embedding instability, ONNX naming mismatch, SPLADE zero Java vocab
+- **Benchmark harness built** — `scripts/benchmark/` with 31 tests, reusable for future model comparisons
 
 ## Cross-Module
 
-**casehubio/neural-text#46** — SPLADE model quality and RRF fusion weight tuning. Blocked on #28 results. If SPLADE doesn't fix the keyword catastrophe, neural-text needs model evaluation work.
+**neural-text — six issues filed, all can start now:**
 
-**neural-text (prior session, still pending):** `@QuarkusMain` fix and batching on local main — need push to blessed repo.
+| # | Description | Priority |
+|---|-------------|----------|
+| #47 | Qdrant full-text index on content | Highest — foundation for BM25 |
+| #48 | BM25 as third RRF retrieval leg | Second — depends on #47 |
+| #49 | Code-domain embedding model evaluation | Third — research |
+| #50 | Keyword payload indexes (sourceDocumentId, tenantId) | Housekeeping |
+| #51 | OnnxInferenceModel input name validation | Bug fix |
+| #52 | OnnxInferenceModel rank-3 output support | Bug fix |
 
 ## What's Next
 
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
-| #28 | SPLADE hybrid benchmark — reproduce #27 with sparse+dense | M | Med | Next priority — Track 1 |
-| #29 | Complementary retrieval capabilities | L | High | Track 2 — blocked on #28 |
+| #29 | Complementary retrieval capabilities | L | High | Informed by #28 findings — BM25 is the priority path |
 | #24 | Retrieval frequency tracking for garden entries | M | Med | Usage-based curation |
 
 ## Known Issues
@@ -42,10 +52,11 @@ SPLADE hybrid benchmark (#28): re-run the #27 benchmark with ONNX models enabled
 
 | Resource | Location |
 |---|---|
-| Real-world benchmark report | `docs/comparison/real-world-benchmark.md` |
-| Benchmark design spec | `docs/superpowers/specs/2026-06-26-real-world-benchmark-design.md` |
-| Synthetic benchmark report | `docs/comparison/garden-search-vs-grep.md` |
-| Blog — vocabulary gap | `blog/2026-06-27-mdp01-embedding-vocabulary-gap.md` |
-| Blog — grep firehose | `blog/2026-06-26-mdp01-grep-firehose-vs-ranked-answers.md` |
+| Hybrid benchmark report | `docs/comparison/hybrid-benchmark.md` |
+| Benchmark design spec | `docs/superpowers/specs/2026-06-28-splade-hybrid-benchmark-design.md` |
+| Real-world benchmark (#27) | `docs/comparison/real-world-benchmark.md` |
+| Benchmark harness | `scripts/benchmark/` |
+| Blog — SPLADE vocab gap | `blog/2026-06-29-mdp01-splade-hotel-beauty-renovation.md` |
+| Blog — embedding vocab gap | `blog/2026-06-27-mdp01-embedding-vocabulary-gap.md` |
 | Engine design | `docs/DESIGN.md` |
 | Open issues | `gh issue list --repo Hortora/engine` |
