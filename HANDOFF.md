@@ -1,6 +1,6 @@
 # Hortora engine — Project Handoff
 
-*Updated: 2026-06-29 — #28 closed.*
+*Updated: 2026-06-30 — #29 closed, #30 filed.*
 
 ---
 
@@ -10,53 +10,51 @@ Nothing — main is clean.
 
 ## Immediate Next Step
 
-Pick up neural-text work: #47 (Qdrant full-text index) is the highest priority — it's the foundation for BM25 keyword matching, the most direct fix for the keyword catastrophe. Start there.
+Benchmark validation: re-run the #27 methodology with three-leg retrieval (dense + sparse + BM25) to measure whether BM25 closes the keyword gap. Run `gardenReindex()` first to rebuild the Qdrant collection with BM25 Document vectors and list-valued tags.
 
 ## What Changed This Session
 
-- **SPLADE hybrid benchmark complete** (#28) — diagnostic benchmark across 14 real-world scenarios with three configs (dense-only, dense+SPLADE, full-hybrid). Key findings:
-  - SPLADE (`Splade_PP_en_v1`) has zero Java domain vocabulary — expands `ChatModel` to "hotel, beauty, renovation"
-  - Two ONNX integration gaps blocked startup (neural-text #51 input names, #52 output rank) — workarounds applied
-  - Full hybrid crashed after one query (cross-encoder +170ms overhead)
-  - KW embedding instability: 76% result drift from 1.2% corpus growth
-  - Dense+SPLADE latency: +15ms overhead, result quality ambiguous (removed noise but displaced 3 score-2 entries)
-- **Six neural-text issues filed** (#47-52) covering: full-text index, BM25 retrieval leg, code-domain model eval, payload indexes, ONNX input naming, ONNX output rank
-- **Three garden entries** — KW embedding instability, ONNX naming mismatch, SPLADE zero Java vocab
-- **Benchmark harness built** — `scripts/benchmark/` with 31 tests, reusable for future model comparisons
+- **#29 complementary retrieval complete** — BM25 keyword matching as a third RRF retrieval leg alongside dense and sparse. Architecture evolved from planned Java-side RRF to Qdrant-native BM25 via Document vectors (v1.18+). Three legs fuse inside Qdrant in a single gRPC call.
+- **Cross-repo neural-text work** — 12 commits on `casehubio/neural-text` branch `issue-53-payload-hardening-bm25`: `BM25Index`, `BM25IndexRegistry`, `CamelCaseExpander`, `CodeDomainTokenizer`, `ExtractionResult`/`ChunkInput` listMetadata, metadata payload indexes, `HybridCaseRetriever` BM25 prefetch leg
+- **Engine MCP enrichment** — `gardenSearch` gains `type` and `tags` filter parameters; `GardenMetadataExtractor` emits tags as list metadata
+- **Three garden entries** — Qdrant BM25 RRF composition (revision), CamelCase compound preservation technique, BM25 test isolation gotcha
+- **#30 filed** — federation type/tags propagation (type/tags filters not forwarded to upstream/peer nodes)
+- **Qdrant v1.18+ required** — Document vector inference for BM25
 
 ## Cross-Module
 
-**neural-text — six issues filed, all can start now:**
+**neural-text — 12 commits on `issue-53-payload-hardening-bm25`, not yet merged to main:**
 
-| # | Description | Priority |
-|---|-------------|----------|
-| #47 | Qdrant full-text index on content | Highest — foundation for BM25 |
-| #48 | BM25 as third RRF retrieval leg | Second — depends on #47 |
-| #49 | Code-domain embedding model evaluation | Third — research |
-| #50 | Keyword payload indexes (sourceDocumentId, tenantId) | Housekeeping |
-| #51 | OnnxInferenceModel input name validation | Bug fix |
-| #52 | OnnxInferenceModel rank-3 output support | Bug fix |
+| What | Status |
+|------|--------|
+| BM25Index + CodeDomainTokenizer | Complete, tested |
+| ExtractionResult/ChunkInput listMetadata SPI | Complete, backward-compatible |
+| HybridCaseRetriever BM25 prefetch leg | Complete, 207 tests pass |
+| Metadata payload indexes (domain, type, tags) | Complete |
+| Branch merge to neural-text main | Pending — needs neural-text session |
 
 ## What's Next
 
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
-| #29 | Complementary retrieval capabilities | L | High | Informed by #28 findings — BM25 is the priority path |
-| #24 | Retrieval frequency tracking for garden entries | M | Med | Usage-based curation |
+| — | Benchmark validation (re-run #27 with BM25) | M | Low | Reuse existing harness; key metric: does BM25 close keyword gap? |
+| #30 | Federation type/tags propagation | S | Low | Mechanical parameter threading |
+| #24 | Retrieval frequency tracking | M | Med | Usage-based curation |
 
 ## Known Issues
 
-*Unchanged — `git show HEAD~1:HANDOFF.md`*
+- Neural-text branch `issue-53-payload-hardening-bm25` needs merging to main via neural-text session
+- Re-index required after deployment (`gardenReindex()`) for BM25 + tags-as-list migration
+- In-process `BM25Index` exists but is not used on the retrieval path (dead code — Qdrant-native BM25 is primary)
 
 ## Key References
 
 | Resource | Location |
 |---|---|
+| Complementary retrieval spec | `docs/superpowers/specs/2026-06-29-complementary-retrieval-design.md` |
+| Implementation plan | `docs/superpowers/plans/2026-06-29-complementary-retrieval.md` |
+| Blog — keyword fix lands | `blog/2026-06-30-mdp01-keyword-fix-lands.md` |
 | Hybrid benchmark report | `docs/comparison/hybrid-benchmark.md` |
-| Benchmark design spec | `docs/superpowers/specs/2026-06-28-splade-hybrid-benchmark-design.md` |
 | Real-world benchmark (#27) | `docs/comparison/real-world-benchmark.md` |
-| Benchmark harness | `scripts/benchmark/` |
-| Blog — SPLADE vocab gap | `blog/2026-06-29-mdp01-splade-hotel-beauty-renovation.md` |
-| Blog — embedding vocab gap | `blog/2026-06-27-mdp01-embedding-vocabulary-gap.md` |
 | Engine design | `docs/DESIGN.md` |
 | Open issues | `gh issue list --repo Hortora/engine` |
