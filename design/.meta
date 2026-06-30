@@ -1,0 +1,9 @@
+branch: issue-32-bge-m3-adoption
+project-sha: 6eb6784adc10de509f78e1b3c7520e83ef29c14e
+date: 2026-06-30
+issue: 32
+issue-repo: Hortora/engine
+covers: 32
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
