@@ -11,3 +11,4 @@
 | [2026-06-26-mdp01-grep-firehose-vs-ranked-answers.md](2026-06-26-mdp01-grep-firehose-vs-ranked-answers.md) | 2026-06-26 | The grep firehose vs. eight ranked answers |
 | [2026-06-27-mdp01-embedding-vocabulary-gap.md](2026-06-27-mdp01-embedding-vocabulary-gap.md) | 2026-06-27 | The vocabulary gap: why embedding search can't read Java |
 | [2026-06-30-mdp01-keyword-fix-lands.md](2026-06-30-mdp01-keyword-fix-lands.md) | 2026-06-30 | The keyword fix lands |
+| [2026-06-30-mdp02-bm25-closes-the-gap.md](2026-06-30-mdp02-bm25-closes-the-gap.md) | 2026-06-30 | BM25 closes the gap |
