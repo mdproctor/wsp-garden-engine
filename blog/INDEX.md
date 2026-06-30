@@ -10,3 +10,4 @@
 | [2026-06-23-mdp01-audit-fixes.md](2026-06-23-mdp01-audit-fixes.md) | 2026-06-23 | The audit that fixed what we'd left behind |
 | [2026-06-26-mdp01-grep-firehose-vs-ranked-answers.md](2026-06-26-mdp01-grep-firehose-vs-ranked-answers.md) | 2026-06-26 | The grep firehose vs. eight ranked answers |
 | [2026-06-27-mdp01-embedding-vocabulary-gap.md](2026-06-27-mdp01-embedding-vocabulary-gap.md) | 2026-06-27 | The vocabulary gap: why embedding search can't read Java |
+| [2026-06-30-mdp01-keyword-fix-lands.md](2026-06-30-mdp01-keyword-fix-lands.md) | 2026-06-30 | The keyword fix lands |
