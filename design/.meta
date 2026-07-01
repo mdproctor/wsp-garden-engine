@@ -1,0 +1,9 @@
+branch: issue-035-bge-m3-onnx-export
+project-sha: 47504d62a7a494102507bdac043667dfa5c8e665
+date: 2026-07-01
+issue: 35
+issue-repo: Hortora/engine
+covers: 35
+flyway-next-v: none
+design-repo: workspace
+design-section-hashes: 
