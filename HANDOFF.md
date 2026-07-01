@@ -8,35 +8,45 @@ Nothing — main is clean and pushed.
 
 ## Immediate Next Step
 
-Pick the next retrieval improvement: BGE-M3 adoption (single model replacing nomic-embed-text + SPLADE + cross-encoder) or convex combination fusion test (CC α=0.5 vs RRF — config change only, no code). BGE-M3 is the bigger win but requires neural-text #30; CC is a quick experiment.
+Deliver the BGE-M3 three-head ONNX export script. The SPI and pipeline changes are merged (neural-text `issue-30-bge-m3-multi-modal`, engine `ee7cc47`), but end-to-end retrieval requires the actual ONNX model with dense/sparse/ColBERT output heads baked in. HuggingFace Optimum only exports the backbone — a custom export wrapping BAAI's `modeling.py` forward() is needed. File neural-text issue for the export script, then update `download-models.sh`.
 
 ## What Changed This Session
 
-- **All 224 three-leg benchmark entries scored** — 89.3% relevant precision, 64.3% highly relevant, 10.7% noise. Three-leg gardenSearch now clearly beats grep (was 6-6-2 tied in #27).
-- **Adaptive result extension** — gardenSearch over-fetches 2x, extends through dense score clusters (gap < 0.05), returns total-count metadata signal. Addresses the fixed 8-result cap that was grep's remaining structural advantage.
-- **DESIGN.md synced** — precision figure updated, adaptive extension documented.
-- **1 unpushed commit from previous session landed** — `2e6e682` docs update now on origin/main.
+- **BGE-M3 adoption complete** — `InferenceOutput` evolved to multi-output final class, `MultiModalEmbedder` SPI created in `inference-api`, `BgeM3Embedder` module added, full RAG pipeline evolved (HybridCaseRetriever, QdrantEmbeddingIngestor, all reactive variants, bean producers), engine wired to BGE-M3.
+- **Ollama removed** — `quarkus-langchain4j-ollama` dependency dropped. Dense embeddings now come from ONNX via the `InferenceModel` SPI.
+- **ColBERT MAX_SIM reranking** — replaces client-side cross-encoder. Document ColBERT vectors stored as Qdrant multi-vectors, server-side rescoring via two-stage query.
+- **Design review (adversarial, 4 rounds, $15)** — 18 verified improvements including dependency inversion fix, immutability guarantees, sparse post-processing correction, Matryoshka continuity.
+- **2 garden entries** — BGE-M3 sparse post-processing gotcha (GE-20260630-db5dce), Java record array immutability gotcha (GE-20260630-73d3c2).
+
+## Cross-Repo: neural-text
+
+Branch `issue-30-bge-m3-multi-modal` has 7 commits (not yet pushed to origin). Changes span inference-api, inference-inmem, inference-runtime, inference-bge-m3 (new), rag, inference-tasks. Full neural-text build green (23 modules).
+
+**Action needed:** push neural-text branch and open PR or merge to main.
 
 ## What's Next
 
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
-| — | BGE-M3 adoption (neural-text #30) | L | Med | Single model replaces nomic-embed-text + SPLADE + cross-encoder; ColBERT as reranker |
-| — | Convex Combination fusion test | S | Low | CC (α=0.5) vs RRF — config change, no code |
+| — | BGE-M3 ONNX export script | M | Med | Custom three-head export from HuggingFace; prerequisite for end-to-end |
+| — | Neural-text branch merge | S | Low | Push + merge issue-30-bge-m3-multi-modal to main |
+| #33 | Convex Combination fusion test | S | Low | CC α=0.5 vs RRF — config change only |
+| #34 | Matryoshka truncation + ColBERT quantization | M | Med | Storage optimization after baseline established |
 | #30 | Federation type/tags propagation | S | Low | Mechanical parameter threading |
 | #24 | Retrieval frequency tracking | M | Med | Usage-based curation |
 
 ## Known Issues
 
-- In-process `BM25Index` in neural-text is dead code on retrieval path (Qdrant-native BM25 is primary)
-- neural-text #51/#52 (ONNX model validation) workaround'd in download-models.sh, not fixed upstream
+- BGE-M3 three-head ONNX model does not exist yet — all tests use InMemoryInferenceModel stubs
+- Neural-text `issue-30-bge-m3-multi-modal` branch is local-only (not pushed to origin)
+- `SeparateModelEmbedder` (for casehub deployments not adopting BGE-M3) not yet implemented — file neural-text issue
 
 ## Key References
 
 | Resource | Location |
 |---|---|
-| Three-leg benchmark results | `scripts/benchmark/results/three-leg.json` |
-| Retrieval research + roadmap | `docs/comparison/retrieval-research.md` |
-| Hybrid benchmark report | `docs/comparison/hybrid-benchmark.md` |
-| Blog — scoring then fixing | `blog/2026-06-30-mdp03-scoring-then-fixing.md` |
+| BGE-M3 design spec | `docs/superpowers/specs/2026-06-30-bge-m3-adoption-design.md` |
+| Implementation plan | `docs/superpowers/plans/2026-06-30-bge-m3-adoption.md` |
+| SDD progress ledger | `.superpowers/sdd/progress.md` |
+| Retrieval research | `docs/comparison/retrieval-research.md` |
 | Engine design | `docs/DESIGN.md` |
