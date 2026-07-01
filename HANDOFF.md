@@ -8,22 +8,21 @@ Nothing — both repos on main, clean, pushed.
 
 ## Immediate Next Step
 
-Deliver the BGE-M3 three-head ONNX export script. The SPI and pipeline are merged in both repos, but all tests use `InMemoryInferenceModel` stubs. End-to-end retrieval requires an ONNX model with dense/sparse/ColBERT output heads baked in — HuggingFace Optimum only exports the backbone, so a custom script wrapping BAAI's `modeling.py` is needed. Update `download-models.sh` with the real download URL once the export is available.
+Run the retrieval benchmark against the real BGE-M3 model. The ONNX export is at `~/.hortora/models/bge-m3/model.onnx` — start the engine in dev mode (`quarkus:dev` with `%dev` properties uncommented), index the garden, then run `scripts/benchmark/run_queries.py` against the 14 real-world scenarios. Compare against the 94% dense-only baseline from #27. This feeds #33 (CC vs RRF) and #34 (ColBERT quantization).
 
 ## What Changed This Session
 
-- **BGE-M3 adoption landed in both repos** — neural-text `50c5a04` (squashed), engine `ee7cc47` (squashed). Both on main, pushed to all remotes.
-- **neural-text:** `InferenceOutput` evolved to multi-output final class, `MultiModalEmbedder` SPI, `BgeM3Embedder` module, RAG pipeline migrated from `EmbeddingModel + SparseEmbedder + CrossEncoderReranker` to `MultiModalEmbedder`. ColBERT MAX_SIM reranking. 40 files, +1535/-690.
-- **engine:** Ollama removed, `HybridSearchProducer` produces `MultiModalEmbedder` from `@Inference("bge-m3")`, `CollectionMigration` detects dimension mismatch + missing ColBERT.
-- **Design review:** adversarial, 4 rounds, $15, 18 verified improvements.
-- **2 garden entries:** GE-20260630-db5dce (BGE-M3 sparse post-processing), GE-20260630-73d3c2 (record array immutability).
+- **BGE-M3 ONNX export landed** — engine `12e4027` (squashed). Three-head PyTorch wrapper adapted from aapot/bge-m3-onnx with sparse scatter baked into the ONNX graph, ColBERT including CLS, export via `torch.onnx.export` (opset 18). Validated against PyTorch. `download-models.sh` converted to verification-only.
+- **Neocortex rename** — engine `c2383bc`. Neural-text → neocortex import renames (parallel session work, Refs #628).
+- **Design review:** adversarial, 4 rounds, $14.19, 19 issues raised, 16 verified, 0 unresolved.
+- **1 garden entry:** GE-20260701-f7e1d5 (ColBERT CLS token must be included for batch inference).
 
 ## What's Next
 
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
-| — | BGE-M3 ONNX export script | M | Med | Custom three-head export; prerequisite for end-to-end |
-| — | SeparateModelEmbedder for non-BGE-M3 deployments | S | Low | File neural-text issue |
+| — | Run BGE-M3 benchmark | S | Low | Model exported — just run the harness |
+| — | SeparateModelEmbedder for non-BGE-M3 deployments | S | Low | File neocortex issue |
 | #33 | Convex Combination fusion test | S | Low | CC α=0.5 vs RRF — config change only |
 | #34 | Matryoshka truncation + ColBERT quantization | M | Med | After baseline established |
 | #30 | Federation type/tags propagation | S | Low | Mechanical parameter threading |
@@ -33,6 +32,7 @@ Deliver the BGE-M3 three-head ONNX export script. The SPI and pipeline are merge
 
 | Resource | Location |
 |---|---|
-| BGE-M3 design spec | `docs/superpowers/specs/2026-06-30-bge-m3-adoption-design.md` |
-| Implementation plan | `docs/superpowers/plans/2026-06-30-bge-m3-adoption.md` |
+| ONNX export design spec | `docs/superpowers/specs/2026-07-01-bge-m3-onnx-export-design.md` |
+| BGE-M3 adoption design spec | `docs/superpowers/specs/2026-06-30-bge-m3-adoption-design.md` |
+| Implementation plan | `docs/superpowers/plans/2026-07-01-bge-m3-onnx-export.md` |
 | Retrieval research | `docs/comparison/retrieval-research.md` |
