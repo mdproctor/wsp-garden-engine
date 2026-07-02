@@ -1,0 +1,9 @@
+branch: issue-36-bge-m3-benchmark
+project-sha: 12e40277c90b8c9c9d029807be938558f52ad42f
+date: 2026-07-02
+issue: 36
+issue-repo: Hortora/engine
+covers: 36
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
