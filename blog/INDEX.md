@@ -14,3 +14,4 @@
 | [2026-06-30-mdp02-bm25-closes-the-gap.md](2026-06-30-mdp02-bm25-closes-the-gap.md) | 2026-06-30 | BM25 closes the gap |
 | [2026-06-30-mdp03-scoring-then-fixing.md](2026-06-30-mdp03-scoring-then-fixing.md) | 2026-06-30 | Scoring the benchmark, then fixing what it found |
 | [2026-07-04-mdp01-three-bugs-benchmark.md](2026-07-04-mdp01-three-bugs-benchmark.md) | 2026-07-04 | Three bugs between us and a benchmark |
+| [2026-07-04-mdp02-five-lines-ten-issues.md](2026-07-04-mdp02-five-lines-ten-issues.md) | 2026-07-04 | Five lines, ten issues, one fix |
