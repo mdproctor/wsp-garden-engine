@@ -1,0 +1,9 @@
+branch: issue-38-git-filter-and-quantization
+project-sha: fc0bf6d3be7d83ef01d1df56d1dfaad58d6f1c8e
+date: 2026-07-04
+issue: 38
+issue-repo: Hortora/engine
+covers: 38,34
+flyway-next-v: none
+design-repo: workspace
+design-section-hashes: 
