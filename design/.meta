@@ -1,9 +1,9 @@
 branch: issue-33-s-xs-batch
 project-sha: b44add86f6834037f97833156a76807ea0eb2305
 date: 2026-07-04
-issue: 33
+issue: 30
 issue-repo: Hortora/engine
-covers: 33,30,37,38
+covers: 30
 flyway-next-v: none
 design-repo: project
 design-section-hashes: 
