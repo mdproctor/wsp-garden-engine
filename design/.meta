@@ -1,0 +1,9 @@
+branch: issue-40-wire-hyde-query-expansion
+project-sha: 5f023e13ea942b1553790749fedcadd0c9bb90fa
+date: 2026-07-06
+issue: 40
+issue-repo: Hortora/engine
+covers: 40
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
