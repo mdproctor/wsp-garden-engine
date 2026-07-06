@@ -4,56 +4,52 @@
 
 ## What Just Shipped (2026-07-06)
 
-### Comprehensive retrieval benchmark
+### Branch `issue-39-increase-default-limit` closed → `5f023e1` on main
 
-Ran 5 config variants against 14 scenarios (KW + NL queries). Built analysis tooling and a definitive grep vs gardenSearch comparison. Key findings:
+**Closes #39, #42, #33.** Three issues landed in one branch:
 
-- **Fusion tuning is exhausted**: CC (+0pp), DBSF (-1pp), ColBERT scalar quant (-1pp), Matryoshka 768 (0pp) — nothing beats RRF (k=60)
-- **gardenSearch beats grep 11/14 scenarios** at 87% precision vs 66%
-- **Root cause of 87% plateau**: ranking noise pushes relevant entries to rank 9-12, outside the top-8 window. The "DOMAIN_ABSENCE" failure mode was a misdiagnosis — entries exist, they're just buried in noise
-- **#33 closed** — RRF stays, no fusion change warranted
+1. **#39 — Default limit 8→16.** `SearchResource.DEFAULT_LIMIT` changed from 8 to 16. Benchmark result: +24 relevant entries found (+12%), precision 78% (still +12pp above grep's 66%). Adaptive extension returns ~10 results per query (not 16) due to relevance gap trimming.
 
-### Issues filed
+2. **#33 — Fusion benchmark complete.** Tested CC, DBSF, ColBERT scalar quantization, and Matryoshka 768-dim — none beats RRF (k=60). RRF stays as the fusion strategy.
 
-- neocortex#104 (closed) — configurable fusion strategy (RRF/CC/DBSF)
-- neocortex#105 (open) — retrieval tracking SPI
+3. **#42 — DOMAIN_ABSENCE labels corrected.** The failure mode was misdiagnosed in #27 — entries exist in corpus (grep finds them). Actual failures are POLYSEMY and VOCABULARY_GAP. Garden entry GE-20260706-146e14 captures this insight.
 
 ### Artifacts produced
 
-- `docs/comparison/fusion-benchmark.md` — CC/DBSF/ColBERT-SQ/Matryoshka vs RRF
-- `docs/comparison/grep-vs-gardensearch.md` — definitive grep vs gardenSearch comparison
-- `scripts/benchmark/analyze_fusion.py` — multi-variant comparison analysis
-- `scripts/benchmark/analyze_grep_comparison.py` — grep head-to-head analysis
-- `scripts/benchmark/results/bge-m3-cc.json`, `bge-m3-dbsf.json`, `bge-m3-colbert-sq.json`, `bge-m3-matryoshka-768.json`
+- `docs/comparison/fusion-benchmark.md` — 5-config comparison
+- `docs/comparison/grep-vs-gardensearch.md` — definitive grep vs gardenSearch
+- `scripts/benchmark/analyze_fusion.py`, `analyze_grep_comparison.py` — analysis tooling
+- 5 new benchmark result JSON files in `scripts/benchmark/results/`
 
 ## Immediate Next Step
 
-**#39 — increase default limit from 8 to 16.** This is the highest-impact change identified. One-line change in `SearchResource.java`, then re-run benchmark to measure impact. The regression from three-leg (94%) to BGE-M3 (87%) is caused by relevant entries at rank 9-12 being invisible at limit=8.
+**#40 — Wire HyDE query expansion.** VOCABULARY_GAP is the #1 remaining failure mode. Neocortex already has `HydeCaseRetriever` and `QueryExpandingCaseRetriever` in `rag-expansion`. Engine needs to wire a ChatModel provider and enable the HyDE decorator. Research shows 3-17% BM25 improvement from query expansion.
 
 ## Open Issues — Retrieval Quality Roadmap
 
 | # | Title | Scale | Complexity | Blocked by | Priority | Notes |
 |---|-------|-------|------------|------------|----------|-------|
-| **#39** | Increase default limit 8→16 | XS | Low | — | **P1** | One-line change + benchmark. Addresses the top-8 ranking bottleneck |
-| **#42** | Fix DOMAIN_ABSENCE failure mode labels | XS | Low | — | P1 | Correct misdiagnosis in benchmark scenarios |
-| **#40** | Wire HyDE query expansion | M | Med | ChatModel provider | P2 | Neocortex has HydeCaseRetriever; needs LLM wired. 3-17% improvement expected on VOCABULARY_GAP |
-| **#41** | Two-stage overfetch + rerank | M | Med | — | P2 | Fetch 20-30, rerank to limit. Research shows +7-8% accuracy |
-| **#24** | Retrieval frequency tracking | M | Med | neocortex#105 | P3 | Usage-based corpus curation. Blocked on neocortex SPI |
+| **#40** | Wire HyDE query expansion | M | Med | ChatModel provider | **P1** | Neocortex has HydeCaseRetriever; engine needs LLM wired |
+| **#41** | Two-stage overfetch + rerank | M | Med | — | P2 | Fetch 20-30, rerank to limit. +7-8% accuracy expected |
+| **#24** | Retrieval frequency tracking | M | Med | neocortex#105 | P3 | Usage-based corpus curation |
 
-## Open Issues — Other
+## Neocortex Dependencies
 
-| # | Title | Scale | Complexity | Blocked by | Notes |
-|---|-------|-------|------------|------------|-------|
-| **#33** | ~~CC fusion test~~ | — | — | — | **CLOSED** — RRF stays |
+| Neocortex # | Status | What engine needs |
+|---|---|---|
+| #104 | **Closed** | Configurable fusion strategy — used in #33 benchmark |
+| #105 | **Open** | Retrieval tracking SPI — blocks engine #24 |
+
+Detailed request for neocortex session written in this session — covers priorities, what doesn't help, and the three things that do (retrieval tracking, HyDE wiring confirmation, overfetch+rerank pattern).
 
 ## Key Insight (record for future sessions)
 
 The retrieval pipeline (embedding model, fusion strategy, quantization) is **not the bottleneck**. All tuning attempts net zero. The bottleneck is:
-1. **Result window size** — limit=8 hides relevant entries at rank 9-12
+1. **Result window size** — limit=8 hid relevant entries at rank 9-12 (fixed by #39)
 2. **Ranking precision** — noise entries displace relevant ones within the window
-3. **Vocabulary gap** — query terms don't overlap with entry vocabulary (fixable via HyDE)
+3. **Vocabulary gap** — query terms don't overlap with entry vocabulary (fix: HyDE #40)
 
-Don't chase new models or fusion strategies. The next gains come from: wider result window (#39), query expansion (#40), and smarter reranking (#41).
+Don't chase new models or fusion strategies. The next gains come from: query expansion (#40) and smarter reranking (#41).
 
 ## Key References
 
@@ -64,5 +60,4 @@ Don't chase new models or fusion strategies. The next gains come from: wider res
 | grep vs gardenSearch report | `docs/comparison/grep-vs-gardensearch.md` |
 | BGE-M3 baseline report | `docs/comparison/bge-m3-benchmark.md` |
 | Retrieval research & roadmap | `docs/comparison/retrieval-research.md` |
-| neocortex#104 (fusion strategy) | casehubio/neocortex#104 (closed) |
-| neocortex#105 (retrieval tracking) | casehubio/neocortex#105 (open) |
+| Garden entry on misdiagnosis | GE-20260706-146e14 |
