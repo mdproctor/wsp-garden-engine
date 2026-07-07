@@ -38,3 +38,4 @@ Filed neocortex#121 for `RerankingCaseRetriever` cross-encoder decorator — cli
 | rerankTopN=30 benchmark | `scripts/benchmark/results/rerank-topn-30.json` |
 | HyDE baseline benchmark | `scripts/benchmark/results/hyde-session.json` |
 | Four-signal baseline | `scripts/benchmark/results/bge-m3-four-signal.json` |
+| Blog: rerankTopN bottleneck | `blog/2026-07-07-mdp01-reranktopn-bottleneck.md` |
