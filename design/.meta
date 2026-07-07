@@ -1,0 +1,9 @@
+branch: issue-41-two-stage-overfetch-rerank
+project-sha: 4d7cbdb080985cc7f7e229a235d3cf77ece54a9a
+date: 2026-07-07
+issue: 41
+issue-repo: Hortora/engine
+covers: 41
+flyway-next-v: unknown
+design-repo: project
+design-section-hashes: 
