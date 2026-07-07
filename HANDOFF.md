@@ -2,62 +2,55 @@
 
 ---
 
-## What Just Shipped (2026-07-06)
+## What Just Shipped (2026-07-07)
 
-### Branch `issue-39-increase-default-limit` closed → `5f023e1` on main
+### Branch `issue-40-wire-hyde-query-expansion` closed → main
 
-**Closes #39, #42, #33.** Three issues landed in one branch:
+**Closes #40.** HyDE query expansion wired via `SessionQueryExpander` using platform `AgentProvider.openSession()` for persistent Claude sessions. Benchmark: +15 relevant entries (204→219, +7%), 99% precision, ~10s latency per query.
 
-1. **#39 — Default limit 8→16.** `SearchResource.DEFAULT_LIMIT` changed from 8 to 16. Benchmark result: +24 relevant entries found (+12%), precision 78% (still +12pp above grep's 66%). Adaptive extension returns ~10 results per query (not 16) due to relevance gap trimming.
+Root causes resolved during wiring:
+1. Arc silently skips `@Decorator` on `@Produces` method beans (neocortex #114 fixed)
+2. `AgentProviderChatModel` uses `langchain4j.close-timeout` not `agent.claude.default-timeout` — two configs for same chain
+3. Platform modules need `quarkus.index-dependency` for CDI discovery
 
-2. **#33 — Fusion benchmark complete.** Tested CC, DBSF, ColBERT scalar quantization, and Matryoshka 768-dim — none beats RRF (k=60). RRF stays as the fusion strategy.
-
-3. **#42 — DOMAIN_ABSENCE labels corrected.** The failure mode was misdiagnosed in #27 — entries exist in corpus (grep finds them). Actual failures are POLYSEMY and VOCABULARY_GAP. Garden entry GE-20260706-146e14 captures this insight.
-
-### Artifacts produced
-
-- `docs/comparison/fusion-benchmark.md` — 5-config comparison
-- `docs/comparison/grep-vs-gardensearch.md` — definitive grep vs gardenSearch
-- `scripts/benchmark/analyze_fusion.py`, `analyze_grep_comparison.py` — analysis tooling
-- 5 new benchmark result JSON files in `scripts/benchmark/results/`
+Two scenario regressions (spec1-d1-cdi-priority-tiers -3 relevant, issue-4-rest-messaging -1). Filed neocortex #115-#118 epic for regression-free expansion.
 
 ## Immediate Next Step
 
-**#40 — Wire HyDE query expansion.** VOCABULARY_GAP is the #1 remaining failure mode. Neocortex already has `HydeCaseRetriever` and `QueryExpandingCaseRetriever` in `rag-expansion`. Engine needs to wire a ChatModel provider and enable the HyDE decorator. Research shows 3-17% BM25 improvement from query expansion.
+**Engine-side HyDE prompt tuning** — three tweaks to try on a new branch, each benchmarkable independently:
 
-## Open Issues — Retrieval Quality Roadmap
+1. **Domain-aware prompting** — if query mentions CDI, Hibernate, testing etc., inject domain vocabulary anchors into the HyDE prompt template. Change `application.properties` `casehub.rag.expansion.prompt-template`. · XS · Low
 
-| # | Title | Scale | Complexity | Blocked by | Priority | Notes |
-|---|-------|-------|------------|------------|----------|-------|
-| **#40** | Wire HyDE query expansion | M | Med | ChatModel provider | **P1** | Neocortex has HydeCaseRetriever; engine needs LLM wired |
-| **#41** | Two-stage overfetch + rerank | M | Med | — | P2 | Fetch 20-30, rerank to limit. +7-8% accuracy expected |
-| **#24** | Retrieval frequency tracking | M | Med | neocortex#105 | P3 | Usage-based corpus curation |
+2. **Shorter hypotheticals** — current prompt asks for 3-5 sentences. Try 1-2 sentences to reduce embedding drift. Config-only change. · XS · Low
+
+3. **Confidence gating** — in `SessionQueryExpander.expand()`, check if the hypothetical is too generic (too short, no domain keywords). If so, skip expansion and use original query. ~10 lines of Java. · S · Low
+
+Each can be benchmarked against `scripts/benchmark/results/hyde-session.json` (the current baseline with HyDE). Qdrant needs re-indexing first (Podman machine now has 12GB — `podman machine set --memory 12288` was applied this session).
 
 ## Neocortex Dependencies
 
 | Neocortex # | Status | What engine needs |
 |---|---|---|
-| #104 | **Closed** | Configurable fusion strategy — used in #33 benchmark |
 | #105 | **Open** | Retrieval tracking SPI — blocks engine #24 |
+| #115 | **Open** | Epic: regression-free query expansion |
+| #116 | **Open** | Always include original query in expanded set — eliminates regressions |
+| #117 | **Open** | Per-leg embedding separation (supersedes #113) |
+| #118 | **Open** | Expansion drift metrics + auto-fallback |
 
-Detailed request for neocortex session written in this session — covers priorities, what doesn't help, and the three things that do (retrieval tracking, HyDE wiring confirmation, overfetch+rerank pattern).
+After neocortex #116 lands, re-benchmark to confirm zero regressions.
 
-## Key Insight (record for future sessions)
+## Open Issues
 
-The retrieval pipeline (embedding model, fusion strategy, quantization) is **not the bottleneck**. All tuning attempts net zero. The bottleneck is:
-1. **Result window size** — limit=8 hid relevant entries at rank 9-12 (fixed by #39)
-2. **Ranking precision** — noise entries displace relevant ones within the window
-3. **Vocabulary gap** — query terms don't overlap with entry vocabulary (fix: HyDE #40)
-
-Don't chase new models or fusion strategies. The next gains come from: query expansion (#40) and smarter reranking (#41).
+| # | Title | Scale | Complexity | Blocked by | Notes |
+|---|-------|-------|------------|------------|-------|
+| **#41** | Two-stage overfetch + rerank | M | Med | — | P2, unblocked |
+| **#24** | Retrieval frequency tracking | M | Med | neocortex #105 | P3 |
 
 ## Key References
 
 | Resource | Location |
 |---|---|
-| Retrieval quality memory | `~/.claude/projects/.../memory/project_retrieval_quality_findings.md` |
-| Fusion benchmark report | `docs/comparison/fusion-benchmark.md` |
-| grep vs gardenSearch report | `docs/comparison/grep-vs-gardensearch.md` |
-| BGE-M3 baseline report | `docs/comparison/bge-m3-benchmark.md` |
-| Retrieval research & roadmap | `docs/comparison/retrieval-research.md` |
-| Garden entry on misdiagnosis | GE-20260706-146e14 |
+| HyDE design spec | `docs/superpowers/specs/2026-07-06-hyde-query-expansion-design.md` |
+| HyDE benchmark results | `scripts/benchmark/results/hyde-session.json` |
+| Design review workspace | `~/adr/hortora-engine/hyde-query-expansion-20260706-104333/` |
+| Garden entries | GE-20260707-23d0ab (timeout gotcha), GE-20260707-4ea952 (session technique) |
