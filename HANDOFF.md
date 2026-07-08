@@ -2,40 +2,39 @@
 
 ---
 
-## What Just Shipped (2026-07-07)
+## What Just Shipped (2026-07-08)
 
-### Branch `issue-41-two-stage-overfetch-rerank` closed → main
+### Branch `issue-43-hyde-prompt-tuning` closed → main
 
-**Closes #41.** Widened ColBERT MAX_SIM reranking pool from 10 to 30 candidates (`casehub.rag.retrieval.rerank-top-n=30`). Benchmark: +74% relevant entries (153→266), 27/28 scenarios improved, 1 trivial regression (-1 entry, within HyDE noise).
-
-Filed neocortex#121 for `RerankingCaseRetriever` cross-encoder decorator — client-side reranking using `max(limit, rerankPoolSize)` overfetch pattern. ONNX model already at `~/.hortora/models/reranker/`. Blocked on neocortex implementation.
+**Closes #43.** Cross-encoder reranking wired via `casehub-neocortex-rag-crossencoder` (neocortex #121). Pool-50 sweet spot: +8 highly-relevant entries at 1.15s median latency. HyDE proved net-zero at limit=16 — all three retrieval legs use `searchText()` which replaces the original query; blocked on neocortex #117 (per-leg embedding separation). Tuned prompt + confidence gating preserved for when #117 lands.
 
 ## Immediate Next Step
 
-**Wire cross-encoder reranking when neocortex#121 lands** — add `@Inference("reranker")` config, enable the decorator, benchmark A+B vs A-only (`rerank-topn-30.json` is the A baseline). Until then, engine-side HyDE prompt tuning (#40 follow-on) is the next unblocked work.
+**Adaptive cross-encoder score filtering** — scores are now surfaced in the REST response (`crossEncoderScore` field). 40% of returned entries have negative CE scores (cross-encoder thinks they're irrelevant). Adaptive gap detection on CE scores could trim noise entries. Needs a design decision on variable vs fixed result count — changes the API contract for MCP consumers.
 
 ## Neocortex Dependencies
 
 | Neocortex # | Status | What engine needs |
 |---|---|---|
-| #105 | **Open** | Retrieval tracking SPI — blocks engine #24 |
+| #105 | **Closed** | Retrieval tracking SPI — blocks engine #24 |
 | #115 | **Open** | Epic: regression-free query expansion |
-| #116 | **Open** | Always include original query in expanded set — eliminates HyDE regressions |
-| #117 | **Open** | Per-leg embedding separation (supersedes #113) |
+| #116 | **Open** | Always include original query in expanded set |
+| #117 | **Open** | Per-leg embedding separation — **unlocks HyDE** |
 | #118 | **Open** | Expansion drift metrics + auto-fallback |
-| #121 | **Open** | RerankingCaseRetriever cross-encoder decorator — blocks engine A+B benchmark |
+| #121 | **Closed** | RerankingCaseRetriever — **wired in this session** |
 
 ## Open Issues
 
 | # | Title | Scale | Complexity | Blocked by | Notes |
 |---|-------|-------|------------|------------|-------|
-| **#24** | Retrieval frequency tracking | M | Med | neocortex #105 | P3 |
+| **#24** | Retrieval frequency tracking | M | Med | neocortex #105 (closed — check if unblocked) | P3 |
 
 ## Key References
 
 | Resource | Location |
 |---|---|
-| rerankTopN=30 benchmark | `scripts/benchmark/results/rerank-topn-30.json` |
-| HyDE baseline benchmark | `scripts/benchmark/results/hyde-session.json` |
-| Four-signal baseline | `scripts/benchmark/results/bge-m3-four-signal.json` |
-| Blog: rerankTopN bottleneck | `blog/2026-07-07-mdp01-reranktopn-bottleneck.md` |
+| Cross-encoder pool-50 benchmark | `scripts/benchmark/results/crossencoder-pool50-scored.json` |
+| No-HyDE baseline | `scripts/benchmark/results/no-hyde-baseline.json` |
+| CE pool sweep (30/50/100) | `scripts/benchmark/results/crossencoder-*.json` |
+| HyDE A/B benchmarks | `scripts/benchmark/results/hyde-*.json` |
+| Garden entry: @IfBuildProperty + @ConfigMapping | `GE-20260708-055d01` |
