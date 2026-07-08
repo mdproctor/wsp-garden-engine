@@ -1,5 +1,5 @@
-# Branch Closed: issue-40-wire-hyde-query-expansion
+# Branch Closed: issue-43-hyde-prompt-tuning
 
-**Date:** 2026-07-07
-**Issues:** 40
+**Date:** 2026-07-08
+**Issues:** 43
 **Status:** merged to main
