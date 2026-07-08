@@ -1,0 +1,9 @@
+branch: issue-44-adaptive-ce-filtering
+project-sha: f223ee5fbe9e9dc227eec36e2d844d3bce0d4bec
+date: 2026-07-08
+issue: 44
+issue-repo: Hortora/engine
+covers: 44
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
