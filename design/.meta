@@ -1,0 +1,9 @@
+branch: issue-46-retrieval-quality-improvements
+project-sha: 7545abe286547d8df1b34a1e2f30f5436313916f
+date: 2026-07-09
+issue: 48
+issue-repo: Hortora/engine
+covers: 48,47
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
