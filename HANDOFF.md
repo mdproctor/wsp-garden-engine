@@ -2,39 +2,34 @@
 
 ---
 
-## What Just Shipped (2026-07-08)
+## What Just Shipped (2026-07-09)
 
-### Branch `issue-43-hyde-prompt-tuning` closed → main
+### Branch `issue-44-adaptive-ce-filtering` closed → main
 
-**Closes #43.** Cross-encoder reranking wired via `casehub-neocortex-rag-crossencoder` (neocortex #121). Pool-50 sweet spot: +8 highly-relevant entries at 1.15s median latency. HyDE proved net-zero at limit=16 — all three retrieval legs use `searchText()` which replaces the original query; blocked on neocortex #117 (per-leg embedding separation). Tuned prompt + confidence gating preserved for when #117 lands.
+**Closes #44.** Adaptive CE score filtering replaces the old `adaptiveExtend()`. Two-layer filtering: score floor (CE < 0 excluded) + gap detection (first CE score drop ≥ 2.0 trims noise tail). `minResults=3` prevents single-result trimming. Dense-only mode preserves existing extension behavior. Benchmark validated: 205 noise entries removed across 28 scenarios with zero loss of relevant (CE > 3.0) entries. Also filed #45 (subagent-mediated retrieval — reduce context impact on main LLM).
+
+Cross-repo: neocortex branch `fix-ce-score-promotion` has CE score promotion fix (uncommitted to main — user reverted). Engine reads `crossEncoderScore` directly, independent of platform fix.
 
 ## Immediate Next Step
 
-**Adaptive cross-encoder score filtering** — scores are now surfaced in the REST response (`crossEncoderScore` field). 40% of returned entries have negative CE scores (cross-encoder thinks they're irrelevant). Adaptive gap detection on CE scores could trim noise entries. Needs a design decision on variable vs fixed result count — changes the API contract for MCP consumers.
+**#45 — Subagent-mediated garden retrieval.** Now that the retrieval pipeline filters noise, the next layer is a cheaper model (Haiku/Sonnet) to distill results before they reach the main LLM's context. Implementation lives in the skill layer, not the engine.
 
 ## Neocortex Dependencies
 
-| Neocortex # | Status | What engine needs |
-|---|---|---|
-| #105 | **Closed** | Retrieval tracking SPI — blocks engine #24 |
-| #115 | **Open** | Epic: regression-free query expansion |
-| #116 | **Open** | Always include original query in expanded set |
-| #117 | **Open** | Per-leg embedding separation — **unlocks HyDE** |
-| #118 | **Open** | Expansion drift metrics + auto-fallback |
-| #121 | **Closed** | RerankingCaseRetriever — **wired in this session** |
+*Unchanged — `git show HEAD~1:HANDOFF.md`*
 
 ## Open Issues
 
 | # | Title | Scale | Complexity | Blocked by | Notes |
 |---|-------|-------|------------|------------|-------|
-| **#24** | Retrieval frequency tracking | M | Med | neocortex #105 (closed — check if unblocked) | P3 |
+| **#24** | Retrieval frequency tracking | M | Med | — | Unblocked (neocortex #105 closed) |
+| **#45** | Subagent-mediated garden retrieval | M | Med | — | Skill-layer work, not engine |
 
 ## Key References
 
 | Resource | Location |
 |---|---|
-| Cross-encoder pool-50 benchmark | `scripts/benchmark/results/crossencoder-pool50-scored.json` |
-| No-HyDE baseline | `scripts/benchmark/results/no-hyde-baseline.json` |
-| CE pool sweep (30/50/100) | `scripts/benchmark/results/crossencoder-*.json` |
-| HyDE A/B benchmarks | `scripts/benchmark/results/hyde-*.json` |
-| Garden entry: @IfBuildProperty + @ConfigMapping | `GE-20260708-055d01` |
+| Adaptive filtering spec | `docs/specs/2026-07-09-adaptive-ce-filtering-design.md` |
+| Adaptive filtering plan | `docs/plans/2026-07-09-adaptive-ce-filtering.md` |
+| Benchmark validation script | `scripts/benchmark/validate_filtering.py` |
+| CE pool-50 benchmark data | `scripts/benchmark/results/crossencoder-pool50-scored.json` |
