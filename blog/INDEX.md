@@ -16,3 +16,4 @@
 | [2026-07-04-mdp01-three-bugs-benchmark.md](2026-07-04-mdp01-three-bugs-benchmark.md) | 2026-07-04 | Three bugs between us and a benchmark |
 | [2026-07-04-mdp02-five-lines-ten-issues.md](2026-07-04-mdp02-five-lines-ten-issues.md) | 2026-07-04 | Five lines, ten issues, one fix |
 | [2026-07-07-mdp01-reranktopn-bottleneck.md](2026-07-07-mdp01-reranktopn-bottleneck.md) | 2026-07-07 | The rerankTopN bottleneck |
+| [2026-07-10-mdp01-the-gap-that-wasnt-there.md](2026-07-10-mdp01-the-gap-that-wasnt-there.md) | 2026-07-10 | The gap that wasn't there |
