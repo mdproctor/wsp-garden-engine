@@ -1,0 +1,9 @@
+branch: issue-24-retrieval-frequency-tracking
+project-sha: df89d393f3b196ff54a115e4095cf75a234563e5
+date: 2026-07-10
+issue: 24
+issue-repo: Hortora/engine
+covers: 24
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
