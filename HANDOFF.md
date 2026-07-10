@@ -2,34 +2,32 @@
 
 ---
 
-## What Just Shipped (2026-07-09)
+## What Just Shipped (2026-07-10)
 
-### Branch `issue-44-adaptive-ce-filtering` closed → main
+### Branch `issue-46-retrieval-quality-improvements` closed → main
 
-**Closes #44.** Adaptive CE score filtering replaces the old `adaptiveExtend()`. Two-layer filtering: score floor (CE < 0 excluded) + gap detection (first CE score drop ≥ 2.0 trims noise tail). `minResults=3` prevents single-result trimming. Dense-only mode preserves existing extension behavior. Benchmark validated: 205 noise entries removed across 28 scenarios with zero loss of relevant (CE > 3.0) entries. Also filed #45 (subagent-mediated retrieval — reduce context impact on main LLM).
+**Closes #48, #47. Epic #46 closed.** Scored all 138 unscored benchmark entries — the reported 3pp precision gap (90% → 87%) was a scoring artifact. Three-leg drops to 86% with complete scoring; BGE-M3 stays at 87% (+1pp ahead). Root-caused all 8 regressions as intrinsic to embedding space differences between model stacks — no engine-side fix available. Also closed #49 (DOMAIN_ABSENCE reclassified as POLYSEMY, diminishing returns) and the parent epic #46.
 
-Cross-repo: neocortex branch `fix-ce-score-promotion` has CE score promotion fix (uncommitted to main — user reverted). Engine reads `crossEncoderScore` directly, independent of platform fix.
+Garden entry GE-20260709-19a59a submitted: excluding unscored entries from retrieval precision silently inflates precision for noisier methods.
 
 ## Immediate Next Step
 
-**#45 — Subagent-mediated garden retrieval.** Now that the retrieval pipeline filters noise, the next layer is a cheaper model (Haiku/Sonnet) to distill results before they reach the main LLM's context. Implementation lives in the skill layer, not the engine.
-
-## Neocortex Dependencies
-
-*Unchanged — `git show HEAD~1:HANDOFF.md`*
+Pick up #45 (subagent-mediated retrieval — skill-layer work) or #24 (retrieval frequency tracking). Retrieval quality is confirmed good at 87%.
 
 ## Open Issues
 
 | # | Title | Scale | Complexity | Blocked by | Notes |
 |---|-------|-------|------------|------------|-------|
-| **#24** | Retrieval frequency tracking | M | Med | — | Unblocked (neocortex #105 closed) |
+| **#24** | Retrieval frequency tracking | M | Med | — | Unblocked |
 | **#45** | Subagent-mediated garden retrieval | M | Med | — | Skill-layer work, not engine |
+| **#50** | Re-enable HyDE after per-leg separation | M | Med | neocortex #117 | Urgency reduced — no precision gap to close |
+| **#51** | Expansion drift metrics integration | S | Med | neocortex #118, #120 | Urgency reduced |
 
 ## Key References
 
 | Resource | Location |
 |---|---|
-| Adaptive filtering spec | `docs/specs/2026-07-09-adaptive-ce-filtering-design.md` |
-| Adaptive filtering plan | `docs/plans/2026-07-09-adaptive-ce-filtering.md` |
-| Benchmark validation script | `scripts/benchmark/validate_filtering.py` |
-| CE pool-50 benchmark data | `scripts/benchmark/results/crossencoder-pool50-scored.json` |
+| Regression analysis | `docs/comparison/regression-analysis.md` |
+| Updated BGE-M3 benchmark | `docs/comparison/bge-m3-benchmark.md` |
+| Complete baseline scores | `scripts/benchmark/baseline_scores.json` |
+| Garden entry (scoring bias gotcha) | GE-20260709-19a59a |
