@@ -2,32 +2,33 @@
 
 ---
 
-## What Just Shipped (2026-07-10)
+## What Just Shipped (2026-07-11)
 
-### Branch `issue-46-retrieval-quality-improvements` closed → main
+### Branch `issue-24-retrieval-frequency-tracking` closed → main
 
-**Closes #48, #47. Epic #46 closed.** Scored all 138 unscored benchmark entries — the reported 3pp precision gap (90% → 87%) was a scoring artifact. Three-leg drops to 86% with complete scoring; BGE-M3 stays at 87% (+1pp ahead). Root-caused all 8 regressions as intrinsic to embedding space differences between model stacks — no engine-side fix available. Also closed #49 (DOMAIN_ABSENCE reclassified as POLYSEMY, diminishing returns) and the parent epic #46.
+**Closes #24.** Added retrieval frequency tracking using the existing `RetrievalTracker` SPI from `casehub-neocortex-rag-api` and `casehub-neocortex-rag-tracking` module. `TrackingCaseRetriever` CDI decorator transparently records every `CaseRetriever.retrieve()` call. `SqliteRetrievalTracker` persists to SQLite (WAL mode, 180-day retention). New `gardenUnretrieved` MCP tool surfaces zero-retrieval and stale entries for harvest-driven curation.
 
-Garden entry GE-20260709-19a59a submitted: excluding unscored entries from retrieval precision silently inflates precision for noisier methods.
+Design review discovered the existing `RetrievalTracker` infrastructure — the original spec proposed a new `RetrievalStatsStore` SPI from scratch. The review rewrote the spec to use what already existed.
+
+Neocortex gap: `SqliteRetrievalTracker.init()` doesn't call `Files.createDirectories()` for the SQLite parent directory — first-run on fresh deployments will fail if `stats/` doesn't exist. One-line fix needed in neocortex.
 
 ## Immediate Next Step
 
-Pick up #45 (subagent-mediated retrieval — skill-layer work) or #24 (retrieval frequency tracking). Retrieval quality is confirmed good at 87%.
+Pick up #45 (subagent-mediated retrieval — skill-layer work) or #24's neocortex companion fix (directory creation in `SqliteRetrievalTracker.init()`).
 
 ## Open Issues
 
 | # | Title | Scale | Complexity | Blocked by | Notes |
 |---|-------|-------|------------|------------|-------|
-| **#24** | Retrieval frequency tracking | M | Med | — | Unblocked |
 | **#45** | Subagent-mediated garden retrieval | M | Med | — | Skill-layer work, not engine |
-| **#50** | Re-enable HyDE after per-leg separation | M | Med | neocortex #117 | Urgency reduced — no precision gap to close |
+| **#50** | Re-enable HyDE after per-leg separation | M | Med | neocortex #117 | Urgency reduced |
 | **#51** | Expansion drift metrics integration | S | Med | neocortex #118, #120 | Urgency reduced |
 
 ## Key References
 
 | Resource | Location |
 |---|---|
-| Regression analysis | `docs/comparison/regression-analysis.md` |
-| Updated BGE-M3 benchmark | `docs/comparison/bge-m3-benchmark.md` |
-| Complete baseline scores | `scripts/benchmark/baseline_scores.json` |
-| Garden entry (scoring bias gotcha) | GE-20260709-19a59a |
+| Design spec | `docs/specs/2026-07-10-retrieval-frequency-tracking-design.md` |
+| Implementation plan | `docs/plans/2026-07-11-retrieval-frequency-tracking.md` |
+| Design review workspace | `~/adr/hortora-engine/retrieval-frequency-tracking-20260710-211329/` |
+| Neocortex directory creation gap | `SqliteRetrievalTracker.init()` in `casehub-neocortex-rag-tracking` |
