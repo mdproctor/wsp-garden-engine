@@ -1,0 +1,9 @@
+branch: issue-50-re-enable-hyde
+project-sha: cc167b23eefb0e39b0d243b59fb329c1dfbb0282
+date: 2026-07-22
+issue: 50
+issue-repo: Hortora/engine
+covers: 50
+flyway-next-v: none
+design-repo: workspace
+design-section-hashes: 
