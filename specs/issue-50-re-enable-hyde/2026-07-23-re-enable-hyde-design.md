@@ -14,9 +14,9 @@ Since then, neocortex #113 landed per-leg embedding separation in `HybridCaseRet
 - **Sparse/ColBERT** → `text()` (original — lexical signal preserved)
 - **BM25** → `query.text()` (original — keyword match preserved)
 
-The separation is tested (`embedBatch([searchText, text])` with expansion, `embed(searchText)` without). HyDE should now be purely additive.
+The separation is tested. HyDE should now be purely additive.
 
-Neocortex #117 describes the same per-leg separation as a feature request. The implementation landed under #113's commits; #117 is superseded and should be closed.
+Neocortex #117 then promoted the separation from a retriever-level workaround into a proper `MultiModalEmbedder` contract: `embedSeparate(denseText, nonDenseText)` routes each mode to the correct input text. `SeparateModelEmbedder` drops from 4 model calls to 2. Retrievers collapse from a 7-line if/else branch to a single `embedder.embedSeparate(query.searchText(), query.text())` call.
 
 ## Approach
 
@@ -50,7 +50,7 @@ With HyDE enabled, the full data flow is:
 4. `QueryExpandingCaseRetriever` checks `expanded.contains(query)` — this is **false** because `RetrievalQuery` is a record and `(text, null) ≠ (text, hypothetical)`. The decorator prepends the original: `[query, query.withExpansion(hypothetical)]`
 5. **Two full retrieval cycles** execute through the decorator chain:
    - **Original query** (no expansion): `embed(searchText)` → four-leg Qdrant retrieval → cross-encoder rerank — identical to the no-HyDE baseline
-   - **Expanded query**: `embedBatch([searchText, text])` → four-leg retrieval with per-leg separation (dense uses hypothetical, sparse/BM25 use original) → cross-encoder rerank using `query.text()` (original query, not the hypothetical)
+   - **Expanded query**: `embedSeparate(searchText, text)` → four-leg retrieval with per-leg separation (dense uses hypothetical, sparse/BM25 use original) → cross-encoder rerank using `query.text()` (original query, not the hypothetical)
 6. `QueryExpandingCaseRetriever` merges both result sets via RRF fusion (k=60)
 
 The cross-encoder always evaluates against the original query text regardless of expansion, providing a consistent relevance signal and guarding against expansion noise in the candidate set.
@@ -84,8 +84,8 @@ Existing `SessionQueryExpanderTest` covers `shouldSkip()` — the confidence gat
 
 Beyond the config change, these housekeeping steps are required to close #50:
 
-1. **Close neocortex #117** as superseded by #113. The per-leg separation described in #117 was implemented under #113's commits (`adaf00d`, `ee32fa2`, `00d0ba1`).
-2. **Update #50 acceptance criteria:** replace "#117 dependency resolved" with "#113 dependency resolved (per-leg separation merged)." The "Engine updated to use new per-leg embedding API" criterion is satisfied by the neocortex-rag dependency — `HybridCaseRetriever` already calls `embedBatch([searchText, text])` when expansion is present. No engine code change was needed.
+1. **Update neocortex dependency** — `mvn install` neocortex main to pick up #117's `embedSeparate()` API. The retrievers now use the proper contract instead of the `embedBatch` workaround.
+2. **Update #50 acceptance criteria:** replace "#117 dependency resolved" with "#113/#117 dependency resolved (per-leg separation merged and promoted to API contract)."
 3. **Uncomment config** (the three `application.properties` lines above)
 4. **Remove the DISABLED comment** from `application.properties`
 5. **Run benchmark** and document results per Verification section
