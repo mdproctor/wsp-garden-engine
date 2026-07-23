@@ -6,7 +6,7 @@
 
 ## Context
 
-HyDE (Hypothetical Document Embeddings) query expansion was implemented in `SessionQueryExpander` but disabled after benchmarking showed it was net-zero at limit=16 with four-signal retrieval. The root cause: all retrieval legs used `searchText()`, so the hypothetical replaced the original query everywhere — dense got better semantic coverage but sparse/BM25 lost their lexical signal.
+HyDE (Hypothetical Document Embeddings) query expansion was implemented in `SessionQueryExpander` but disabled after benchmarking (issue #40) showed it was net-zero at limit=16 with four-signal retrieval. The root cause: all retrieval legs used `searchText()`, so the hypothetical replaced the original query everywhere — dense got better semantic coverage but sparse/BM25 lost their lexical signal. Prior benchmark results are in `scripts/benchmark/results/` (`hyde-session.json`, `hyde-tuned.json`, `hyde-enabled.json`, `no-hyde-baseline.json`).
 
 Since then, neocortex #113 landed per-leg embedding separation in `HybridCaseRetriever` and `ReactiveHybridCaseRetriever`:
 
@@ -15,6 +15,8 @@ Since then, neocortex #113 landed per-leg embedding separation in `HybridCaseRet
 - **BM25** → `query.text()` (original — keyword match preserved)
 
 The separation is tested (`embedBatch([searchText, text])` with expansion, `embed(searchText)` without). HyDE should now be purely additive.
+
+Neocortex #117 describes the same per-leg separation as a feature request. The implementation landed under #113's commits; #117 is superseded and should be closed.
 
 ## Approach
 
@@ -34,11 +36,24 @@ Remove the "DISABLED" comment explaining the old rationale.
 
 ### Activation path
 
-1. `@IfBuildProperty(name = "casehub.rag.expansion.mode", stringValue = "session")` activates `SessionQueryExpander`
-2. `QueryExpandingCaseRetriever` (CDI decorator from `casehub-neocortex-rag-expansion`) calls `SessionQueryExpander.expand()`
-3. `SessionQueryExpander` opens an `AgentSession` via `AgentProvider` (Claude on Vertex AI), generates a hypothetical garden entry
-4. `RetrievalQuery.withExpansion(hypothetical)` sets the expansion text
-5. `HybridCaseRetriever` routes: dense uses `searchText()` (hypothetical), sparse/BM25 use `text()` (original)
+Three CDI decorators wrap `CaseRetriever` in priority order (highest = outermost):
+
+1. **`QueryExpandingCaseRetriever`** (`@Priority(200)`, enabled by `casehub.rag.expansion.enabled=true`)
+2. **`RerankingCaseRetriever`** (`@Priority(75)`, enabled by `casehub.rag.reranking.enabled=true`)
+3. **`HybridCaseRetriever`** (the actual bean — four-signal retrieval)
+
+With HyDE enabled, the full data flow is:
+
+1. `QueryExpandingCaseRetriever` intercepts `retrieve()`, calls `SessionQueryExpander.expand(query)`
+2. `SessionQueryExpander` opens an `AgentSession` via `AgentProvider` (Claude on Vertex AI), generates a hypothetical garden entry. The entire `expand()` method is `synchronized(sessionLock)` — concurrent queries serialise behind this lock (~2.4s per LLM call). This is acceptable for single-user benchmark use; concurrent scenarios require architectural changes (see #52).
+3. `expand()` returns `List.of(query.withExpansion(hypothetical))` — one query with expansion set
+4. `QueryExpandingCaseRetriever` checks `expanded.contains(query)` — this is **false** because `RetrievalQuery` is a record and `(text, null) ≠ (text, hypothetical)`. The decorator prepends the original: `[query, query.withExpansion(hypothetical)]`
+5. **Two full retrieval cycles** execute through the decorator chain:
+   - **Original query** (no expansion): `embed(searchText)` → four-leg Qdrant retrieval → cross-encoder rerank — identical to the no-HyDE baseline
+   - **Expanded query**: `embedBatch([searchText, text])` → four-leg retrieval with per-leg separation (dense uses hypothetical, sparse/BM25 use original) → cross-encoder rerank using `query.text()` (original query, not the hypothetical)
+6. `QueryExpandingCaseRetriever` merges both result sets via RRF fusion (k=60)
+
+The cross-encoder always evaluates against the original query text regardless of expansion, providing a consistent relevance signal and guarding against expansion noise in the candidate set.
 
 ### Dependencies
 
@@ -50,22 +65,32 @@ Remove the "DISABLED" comment explaining the old rationale.
 
 Re-run the existing benchmark harness (`scripts/benchmark/`) against all 14 real-world scenarios.
 
+**Prior results:** Issue #40 benchmarks (`scripts/benchmark/results/no-hyde-baseline.json`, `hyde-session.json`, etc.) established that HyDE was net-zero at limit=16 WITHOUT per-leg separation. The re-benchmark should show improvement now that sparse/BM25 retain their lexical signal.
+
 **Comparison:**
-- **Baseline:** current config (HyDE off, five-signal + cross-encoder + adaptive filtering)
+- **Baseline:** current config (HyDE off, four-signal + cross-encoder + adaptive filtering)
 - **Treatment:** HyDE on (same pipeline, expansion enabled)
 
 **Acceptance criteria:**
 - Zero precision regressions on any individual scenario
 - At least 1 scenario shows improvement (HyDE is net-positive, not net-zero)
-- Latency measured and documented (expected ~2.4s overhead per query from LLM round-trip)
+- Latency measured and documented. Expected overhead per query: ~2.5-3.0s total, comprising LLM round-trip (~2.4s) + second retrieval cycle (embedding ~50-200ms, Qdrant retrieval ~50-150ms, cross-encoder rerank ~50-200ms) + RRF fusion (negligible). The LLM call dominates.
 
 ### Testing
 
-Existing `SessionQueryExpanderTest` covers confidence gating and skip logic. No new unit tests needed — the change is config, not code. The benchmark is the integration test.
+Existing `SessionQueryExpanderTest` covers `shouldSkip()` — the confidence gating and hedging-detection logic. The expansion flow itself (prompt template → LLM call → `withExpansion()`) and session management are not unit-tested; the benchmark serves as the integration test. No new unit tests needed — the change is config, not code.
+
+## Implementation Steps
+
+Beyond the config change, these housekeeping steps are required to close #50:
+
+1. **Close neocortex #117** as superseded by #113. The per-leg separation described in #117 was implemented under #113's commits (`adaf00d`, `ee32fa2`, `00d0ba1`).
+2. **Update #50 acceptance criteria:** replace "#117 dependency resolved" with "#113 dependency resolved (per-leg separation merged)." The "Engine updated to use new per-leg embedding API" criterion is satisfied by the neocortex-rag dependency — `HybridCaseRetriever` already calls `embedBatch([searchText, text])` when expansion is present. No engine code change was needed.
+3. **Uncomment config** (the three `application.properties` lines above)
+4. **Remove the DISABLED comment** from `application.properties`
+5. **Run benchmark** and document results per Verification section
 
 ## Out of Scope
 
-- Latency optimisation (caching, async prefetch) — future work if needed
+- Latency optimisation (caching, async prefetch, session lock granularity) — #52
 - Expansion drift metrics (#51) — independent, blocked on neocortex #118/#120
-- API-level embedding contract (neocortex #117) — design improvement to prevent regression, not a correctness gate
-- Issue #50 acceptance criteria update — remove stale #117 blocker language
