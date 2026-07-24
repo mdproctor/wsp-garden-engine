@@ -50,7 +50,15 @@ Use the same technical vocabulary the entry uses — class names, annotations, e
 One question per line, no numbering, no explanations.
 ```
 
-Input: entry title + first ~500 chars of body. Output: 3 lines of query text.
+Input: entry title + first ~2000 chars of body (well within gemma3:4b's 8192-token context). Output: 3 lines of query text.
+
+**Output validation:** `OllamaQueryGenerator` validates before caching:
+- Expect exactly `query-count` lines; trim extra lines, discard if fewer than 2 valid lines
+- Per-line bounds: minimum 15 chars, maximum 150 chars — filters degenerate queries ("What is CDI?") and model explanations
+- Empty/whitespace lines discarded
+- If fewer than 2 lines pass validation, skip augmentation for this entry (log warning, index without queries)
+
+Invalid output is never cached. Entries that fail validation are indexed normally and retried on next modification or reindex.
 
 **Why Ollama, not AgentProvider:** Index-time augmentation runs on every garden entry (~2000+ on full reindex). Claude API calls at $0.003–0.015 each would cost $6–30 per full reindex; local Ollama inference costs nothing. Query generation is a simple task — a 4B parameter model is sufficient. Local inference also avoids a hard dependency on Vertex AI credentials, which may not be available in all environments (local dev, CI). `AgentProvider` is designed for interactive session-based LLM use; a stateless one-shot HTTP call to Ollama is the right abstraction for batch index-time processing.
 
@@ -80,9 +88,20 @@ Generated queries are cached in `.queries` files alongside each garden entry:
 ~/.hortora/garden/jvm/GE-20260515-fd3156.queries   ← cached queries
 ```
 
-One query per line, plain text. Regeneration logic:
-- `.queries` exists and entry `.md` is not newer → use cached (no LLM call)
-- `.queries` missing or `.md` is newer → generate via Ollama, write cache
+First line is a version header; subsequent lines are one query each:
+
+```
+# v:a3f2c1 prompt=<hash6> model=gemma3:4b count=3
+How does @DefaultBean interact with @Produces in Quarkus?
+Why does CDI ignore @DefaultBean on class-level annotations?
+What pattern enables consumer-replaceable CDI defaults?
+```
+
+The version hash is derived from prompt template + model name + query-count. Regeneration logic:
+- `.queries` exists, version hash matches, and entry `.md` is not newer → use cached (no LLM call)
+- `.queries` missing, version hash mismatch, or `.md` is newer → generate via Ollama, write cache
+
+This automatically invalidates cached queries when the prompt is tuned, the model is changed, or the query count is adjusted — no manual deletion of `.queries` files required.
 
 Files are local artifacts, not checked into the garden repo (`*.queries` in `.gitignore`).
 
@@ -148,7 +167,7 @@ Re-run the existing benchmark harness (`scripts/benchmark/`) against all 14 real
 
 Unit tests for:
 - `QueryAugmentingExtractor` — delegation to real extractor, content augmentation with/without queries, disabled state
-- `OllamaQueryGenerator` — sidecar cache read/write/staleness detection
+- `OllamaQueryGenerator` — output validation (line count, length bounds, empty filtering), sidecar cache read/write/staleness detection, cache version invalidation on config change
 - `SearchResource` — stripping logic for the separator in `searchLocal()`
 
 No integration tests against Ollama — graceful degradation means tests run without it.
