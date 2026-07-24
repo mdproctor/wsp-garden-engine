@@ -90,7 +90,7 @@ Files are local artifacts, not checked into the garden repo (`*.queries` in `.gi
 
 `SearchResource.searchLocal()` strips the `---HYPOTHETICAL-QUERIES---` section from `chunk.content()` before passing it as the `body` parameter of `SearchResult`. All search paths (`search()`, `searchFor()`, `searchAdaptive()`) flow through `searchLocal()`, so stripping covers all return paths.
 
-**Cross-encoder interaction:** The cross-encoder reranker evaluates `chunk.content()` before stripping — it sees the augmented content including hypothetical queries. This is intentional: the hypothetical queries provide additional signal about what the document is about, which helps the cross-encoder assess relevance. Since all entries are uniformly augmented, relative rankings are preserved. Selective augmentation of only the dense embedding (without cross-encoder influence) requires the separate named vectors approach (out of scope, see #TBD-named-vectors).
+**Cross-encoder interaction:** The cross-encoder reranker evaluates `chunk.content()` before stripping — it sees the augmented content including hypothetical queries. This is intentional: the hypothetical queries provide additional signal about what the document is about, which helps the cross-encoder assess relevance. Since all entries are uniformly augmented, relative rankings are preserved. Selective augmentation of only the dense embedding (without cross-encoder influence) requires the separate named vectors approach (out of scope, see #53).
 
 **Fusion key:** `RetrievedChunk.fusionKey()` is `sourceDocumentId + "\0" + content`. During the transition from non-augmented to augmented index, entries may have inconsistent fusion keys. A full reindex (`gardenReindex()`) after enabling inverted HyDE eliminates this — all entries get uniform augmentation.
 
@@ -159,9 +159,9 @@ No integration tests against Ollama — graceful degradation means tests run wit
 
 ## Out of Scope
 
-- Separate named vectors for query embeddings (approach C — graduate to this if A works) — #TBD-named-vectors
+- Separate named vectors for query embeddings (approach C — graduate to this if A works) — #53
 - Expansion drift detection (#118/#120 — complementary but independent)
-- LLM quality evaluation framework (manual sampling for now) — #TBD-eval-framework
+- LLM quality evaluation framework (manual sampling for now) — #54
 - Query-time HyDE re-enablement (definitively closed by benchmarks)
 
 ## References
