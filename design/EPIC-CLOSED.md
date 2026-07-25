@@ -1,5 +1,5 @@
-# Branch Closed: issue-40-wire-hyde-query-expansion
+# Branch Closed: issue-50-re-enable-hyde
 
-**Date:** 2026-07-07
-**Issues:** 40
+**Date:** 2026-07-25
+**Issues:** 50
 **Status:** merged to main
