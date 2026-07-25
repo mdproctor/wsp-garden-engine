@@ -17,4 +17,5 @@
 | [2026-07-04-mdp02-five-lines-ten-issues.md](2026-07-04-mdp02-five-lines-ten-issues.md) | 2026-07-04 | Five lines, ten issues, one fix |
 | [2026-07-07-mdp01-reranktopn-bottleneck.md](2026-07-07-mdp01-reranktopn-bottleneck.md) | 2026-07-07 | The rerankTopN bottleneck |
 | [2026-07-09-mdp01-crossencoder-lands.md](2026-07-09-mdp01-crossencoder-lands.md) | 2026-07-09 | Cross-Encoder Reranking and the Pool-Size Sweet Spot |
+| [2026-07-10-mdp01-the-gap-that-wasnt-there.md](2026-07-10-mdp01-the-gap-that-wasnt-there.md) | 2026-07-10 | The gap that wasn't there |
 | [2026-07-25-mdp01-the-hyde-wall.md](2026-07-25-mdp01-the-hyde-wall.md) | 2026-07-25 | The HyDE Wall |
