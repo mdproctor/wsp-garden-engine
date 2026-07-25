@@ -1,0 +1,9 @@
+branch: issue-55-score-based-boosting
+project-sha: dd875c8883ff966d53d10802678fb0187836671e
+date: 2026-07-25
+issue: 55
+issue-repo: Hortora/engine
+covers: 55
+flyway-next-v: none
+design-repo: workspace
+design-section-hashes: 
