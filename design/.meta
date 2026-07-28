@@ -1,0 +1,9 @@
+branch: issue-56-fixed-corpus-benchmark
+project-sha: 7abba117bef302e0d2c14153e7608becb0401b4c
+date: 2026-07-29
+issue: 56
+issue-repo: Hortora/engine
+covers: 56
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
