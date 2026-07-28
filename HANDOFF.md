@@ -1,5 +1,7 @@
 # Hortora engine — Project Handoff
 
+*Updated: neocortex#178, #179, #180 closed — removed from backlog.*
+
 ---
 
 ## What Just Shipped (2026-07-28)
@@ -23,11 +25,7 @@ Pick up #56 (fixed-corpus benchmark snapshots) or #45 (subagent-mediated retriev
 
 ## Neocortex Issues Filed
 
-| # | Title | Scale | Complexity |
-|---|-------|-------|------------|
-| **#178** | Configurable per-leg RRF/fusion weights | S | Med |
-| **#179** | RetrievalAnalyzer — analytics over retrieval tracking data | M | Med |
-| **#180** | Payload-based score boosting in Qdrant prefetch | S | Med |
+*All closed — neocortex#178, #179, #180 landed.*
 
 ## Key References
 
