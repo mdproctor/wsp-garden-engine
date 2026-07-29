@@ -1,3 +1,5 @@
+*Updated: #56 closed — removed from "What Just Shipped" section (already landed on main).*
+
 # Hortora engine — Project Handoff
 
 ---
