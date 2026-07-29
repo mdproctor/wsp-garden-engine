@@ -69,10 +69,11 @@ python3 scripts/benchmark/create_snapshot.py --list
 1. Verify engine readiness — import `wait_for_readiness()` from `benchmark.qdrant_utils`.
 2. Create snapshot: `POST /collections/hortora_garden/snapshots` — Qdrant returns the snapshot name.
 3. Download snapshot: `GET /collections/hortora_garden/snapshots/{snapshot_name}` — write to `~/.hortora/snapshots/<name>/collection.snapshot`.
-4. Compute SHA-256 hash and record file size of the downloaded snapshot.
-5. Query Qdrant version: `GET /` — extract version string.
-6. Write `manifest.json` with: name, point count (from Qdrant collection info), creation timestamp, engine git SHA (`git describe --dirty --always`), garden git SHA (`git -C $HORTORA_GARDEN_PATH rev-parse --short HEAD` — reads `HORTORA_GARDEN_PATH` env var, defaults to `~/.hortora/garden` per `docs/DESIGN.md`), Qdrant version, snapshot SHA-256, snapshot size, scoring files SHA (`git hash-object scripts/benchmark/baseline_scores.json`).
-7. Print summary: snapshot path, point count, SHA-256, size on disk.
+4. Delete server-side snapshot: `DELETE /collections/hortora_garden/snapshots/{snapshot_name}`. Non-fatal — the local copy is the important one. Prevents accumulation on the Qdrant host.
+5. Compute SHA-256 hash and record file size of the downloaded snapshot.
+6. Query Qdrant version: `GET /` — extract version string.
+7. Write `manifest.json` with: name, point count (from Qdrant collection info), creation timestamp, engine git SHA (`git describe --dirty --always`), garden git SHA (`git -C $HORTORA_GARDEN_PATH rev-parse --short HEAD` — reads `HORTORA_GARDEN_PATH` env var, defaults to `~/.hortora/garden` per `docs/DESIGN.md`), Qdrant version, snapshot SHA-256, snapshot size, scoring files SHA (`git hash-object scripts/benchmark/baseline_scores.json`).
+8. Print summary: snapshot path, point count, SHA-256, size on disk.
 
 ### `--list` flag
 
@@ -174,6 +175,7 @@ Extra scores in `baseline_scores.json` for entries not in a snapshot's results a
 | Create snapshot | POST | `/collections/hortora_garden/snapshots` |
 | List snapshots | GET | `/collections/hortora_garden/snapshots` |
 | Download snapshot | GET | `/collections/hortora_garden/snapshots/{name}` |
+| Delete snapshot | DELETE | `/collections/hortora_garden/snapshots/{name}` |
 | Delete collection | DELETE | `/collections/hortora_garden` |
 | Upload snapshot to recover | POST | `/collections/hortora_garden/snapshots/upload` |
 | Collection info | GET | `/collections/hortora_garden` |
