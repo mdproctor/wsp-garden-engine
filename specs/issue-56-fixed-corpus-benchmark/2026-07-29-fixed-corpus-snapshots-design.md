@@ -71,7 +71,7 @@ python3 scripts/benchmark/create_snapshot.py --list
 3. Download snapshot: `GET /collections/hortora_garden/snapshots/{snapshot_name}` — write to `~/.hortora/snapshots/<name>/collection.snapshot`.
 4. Compute SHA-256 hash and record file size of the downloaded snapshot.
 5. Query Qdrant version: `GET /` — extract version string.
-6. Write `manifest.json` with: name, point count (from Qdrant collection info), creation timestamp, engine git SHA (`git describe --dirty --always`), garden git SHA (`git -C ~/.hortora/garden rev-parse --short HEAD`), Qdrant version, snapshot SHA-256, snapshot size, scoring files SHA (`git hash-object scripts/benchmark/baseline_scores.json`).
+6. Write `manifest.json` with: name, point count (from Qdrant collection info), creation timestamp, engine git SHA (`git describe --dirty --always`), garden git SHA (`git -C $HORTORA_GARDEN_PATH rev-parse --short HEAD` — reads `HORTORA_GARDEN_PATH` env var, defaults to `~/.hortora/garden` per `docs/DESIGN.md`), Qdrant version, snapshot SHA-256, snapshot size, scoring files SHA (`git hash-object scripts/benchmark/baseline_scores.json`).
 7. Print summary: snapshot path, point count, SHA-256, size on disk.
 
 ### `--list` flag
@@ -107,11 +107,17 @@ pre-hyde        2400    2026-07-28T14:15:00Z  523 MB    a1b2c3d
 2. Read `manifest.json` for provenance — print snapshot metadata.
 3. Verify snapshot integrity: check SHA-256 hash and file size against manifest.
 4. Check scoring file drift: compare current `baseline_scores.json` git blob SHA against `scoring_sha` in manifest. If different, print informational message noting that scoring data has changed since the snapshot was created.
-5. Delete existing collection: `DELETE /collections/hortora_garden`.
-6. Recover from snapshot: upload the snapshot file via `POST /collections/hortora_garden/snapshots/upload` (multipart form). This works regardless of whether Qdrant runs in Docker or natively — the file is uploaded over HTTP, not accessed via filesystem path.
-7. Check Qdrant version compatibility: compare running Qdrant version against manifest's `qdrant_version`. Warn on major version mismatch.
-8. Wait for collection ready: poll `GET /collections/hortora_garden` until `status == "green"` and point count matches manifest.
+5. Check Qdrant version compatibility: query running Qdrant version via `GET /`, compare against manifest's `qdrant_version`. Abort on major version mismatch (e.g. manifest says 1.x, running Qdrant is 2.x).
+6. Delete existing collection: `DELETE /collections/hortora_garden`. 404 is ignored — the collection may not exist on a fresh Qdrant instance or after a previous failed restore.
+7. Recover from snapshot: upload the snapshot file via `POST /collections/hortora_garden/snapshots/upload` (multipart form). This works regardless of whether Qdrant runs in Docker or natively — the file is uploaded over HTTP, not accessed via filesystem path.
+8. Wait for collection ready: poll `GET /collections/hortora_garden` until `status == "green"` and point count matches manifest. Timeout after 120 seconds.
 9. Run queries as normal.
+
+### Restore error handling
+
+- **DELETE returns 404 (step 6):** Ignored — the collection may not exist.
+- **Upload fails (step 7):** Exit with error: "Snapshot upload failed. Collection was deleted. Re-run with `--corpus-snapshot` to retry — the snapshot file on disk is intact."
+- **Collection never reaches green (step 8):** After 120 seconds, exit with error: "Collection did not become ready after restore. Check Qdrant logs for index corruption or resource issues."
 
 ### Behaviour when `--corpus-snapshot` is not provided
 
@@ -184,6 +190,6 @@ Upload recovery: multipart form with snapshot file. Works with Docker-hosted Qdr
 ## Test plan
 
 - `test_create_snapshot.py` — unit tests for manifest generation (including SHA-256, Qdrant version, scoring SHA), directory creation, `--list` output, error cases (existing name, missing engine, integrity check failure).
-- `test_run_queries.py` — extend existing tests for `--corpus-snapshot` flag parsing, `--qdrant-url` plumbing, `--min-points` ignored with snapshot, unscored percentage calculation (including GE-ID extraction), integrity verification, scoring drift detection, result metadata inclusion.
+- `test_run_queries.py` — extend existing tests for `--corpus-snapshot` flag parsing, `--qdrant-url` plumbing, `--min-points` ignored with snapshot, unscored percentage calculation (including GE-ID extraction), integrity verification, scoring drift detection, restore error handling (DELETE 404, upload failure, readiness timeout), result metadata inclusion.
 - `test_qdrant_utils.py` — unit tests for extracted shared utilities.
 - Manual verification: create a snapshot, run benchmark with `--corpus-snapshot`, confirm results match a live-index run on the same corpus.
