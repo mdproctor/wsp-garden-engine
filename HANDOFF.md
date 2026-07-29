@@ -1,37 +1,33 @@
 # Hortora engine — Project Handoff
 
-*Updated: neocortex#178, #179, #180 closed — removed from backlog.*
-
 ---
 
-## What Just Shipped (2026-07-28)
+## What Just Shipped (2026-07-29)
 
-### Branch `issue-55-score-based-boosting` closed → main
+### Branch `issue-56-fixed-corpus-benchmark` closed → main
 
-**Closes #55.** Score-based boosting implemented and benchmarked — zero precision effect (CE scores dominate at 0.1 weight). Investigation then discovered ALL prior cross-session benchmark comparisons were invalid: garden corpus grew (~230 entries) but scoring files were frozen, causing phantom regressions. The -2.9pp attributed to neocortex changes was entirely from unscored entries. Scored-only precision identical at 85.1-85.2%.
+**Closes #56.** Qdrant snapshot-based corpus freezing for the benchmark harness. `create_snapshot.py` creates and downloads named snapshots with SHA-256 integrity, Qdrant version tracking, and scoring drift detection. `run_queries.py` gains `--corpus-snapshot <name>` to restore a snapshot before running, plus an unscored-entry warning (>5% threshold) that catches the exact scoring gap that produced phantom regressions in #50/#55. Shared utilities extracted to `qdrant_utils.py`.
 
-Score-boost-weight disabled (set to 0.0). `docs/comparison/benchmark-v2.md` documents the methodology fix. Regression findings posted to casehubio/neocortex#181. Unrecovered blog and HyDE specs cherry-picked from closed branches.
+Design spec adversarially reviewed (5 rounds, 20 issues → 17 verified, 3 accepted).
 
 ## Immediate Next Step
 
-Pick up #56 (fixed-corpus benchmark snapshots) or #45 (subagent-mediated retrieval). #56 is the natural follow-on — formalises the methodology fix discovered during #55.
+Score the 18 new garden entries listed in #56's "immediate action" section, then create the first snapshot (`python3 scripts/benchmark/create_snapshot.py v2-baseline`) to establish the reference precision. Alternatively, pick up #45 (subagent-mediated retrieval) — skill-layer work, not engine.
 
 ## Open Issues
 
 | # | Title | Scale | Complexity | Notes |
 |---|-------|-------|------------|-------|
-| **#56** | Fixed-corpus benchmark snapshots | M | Med | Methodology fix — pair corpus SHA with scoring files |
 | **#45** | Subagent-mediated garden retrieval | M | Med | Skill-layer work, not engine |
-
-## Neocortex Issues Filed
-
-*All closed — neocortex#178, #179, #180 landed.*
+| **#57** | Snapshot pruning/rotation | S | Low | Manual `rm -rf` until then |
 
 ## Key References
 
 | Resource | Location |
 |---|---|
 | Benchmark v2 methodology | `docs/comparison/benchmark-v2.md` |
+| Snapshot design spec | `specs/issue-56-fixed-corpus-benchmark/2026-07-29-fixed-corpus-snapshots-design.md` |
+| Design review tracker | `~/adr/hortora-engine/fixed-corpus-snapshots-20260729-015549/tracker.md` |
 | HyDE design specs | `specs/issue-50-re-enable-hyde/` |
 | Blog: The HyDE Wall | `blog/2026-07-25-mdp01-the-hyde-wall.md` |
 | Garden entry | `GE-20260725-cae3ad` — expansion harms strong retrievers |
