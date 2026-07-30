@@ -1,0 +1,9 @@
+branch: issue-58-rag-shadow-harness
+project-sha: a8e752bfcc0885fe20e15b8e473e9582427ee2d1
+date: 2026-07-30
+issue: 58
+issue-repo: Hortora/engine
+covers: 58
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
