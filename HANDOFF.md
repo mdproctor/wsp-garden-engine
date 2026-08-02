@@ -1,35 +1,76 @@
-*Updated: #56 closed — removed from "What Just Shipped" section (already landed on main).*
+*Updated: neocortex#190, neocortex#195 closed — removed from backlog.*
 
 # Hortora engine — Project Handoff
 
 ---
 
-## What Just Shipped (2026-07-29)
+## What Just Shipped (2026-08-02)
 
-### Branch `issue-56-fixed-corpus-benchmark` closed → main
+### Branch `issue-58-rag-shadow-harness` — landed on main
 
-**Closes #56.** Qdrant snapshot-based corpus freezing for the benchmark harness. `create_snapshot.py` creates and downloads named snapshots with SHA-256 integrity, Qdrant version tracking, and scoring drift detection. `run_queries.py` gains `--corpus-snapshot <name>` to restore a snapshot before running, plus an unscored-entry warning (>5% threshold) that catches the exact scoring gap that produced phantom regressions in #50/#55. Shared utilities extracted to `qdrant_utils.py`.
+**Epic #72: gardenSearch retrieval quality and reliability.** 8 commits, 13 new tests (148→161), 10 issues closed (#62-#71), 8 real-world shadow comparison reports.
 
-Design spec adversarially reviewed (5 rounds, 20 issues → 17 verified, 3 accepted).
+**Retrieval quality fixes:**
+- BM25 keyword separation (#64) — keywords go to BM25 via `RetrievalQuery.text()`, NL+keywords to dense/sparse via `expandedText`. Previously-missing entries now surface at position #2.
+- Adaptive filter bypass (#67/#68) — score-floor and gap-trimming disabled when keywords present. Fixed 2→16 results for broad searches.
+- See Also expansion (#70) — `GardenMetadataExtractor` parses "See also" cross-references (922 entries, 3500 refs). Query-time expansion fetches adjacent entries not in initial results. **Requires `gardenReindex()` after deploy to populate see_also metadata in Qdrant.**
+- Tool description (#66) — forces Claude to provide keywords. 100% adoption in post-deploy sessions.
 
-## Immediate Next Step
+**Reliability fixes:**
+- Qdrant graceful degradation (#65) — returns diagnostic message instead of MCP -32603.
+- Startup readiness probe (#69) — `CollectionMigration.waitForQdrant()` retries 5x with 2s delay. Fixes gRPC TRANSIENT_FAILURE when Qdrant starts after engine.
+- Shadow hook debouncer (#71) — fixed PYTHONPATH symlink resolution, added stderr logging.
+- Cursor persistence — moved from tmpdir to `~/.hortora/cursors/` (survives reboots).
+- Periodic reconcile — `ReconcileScheduler` every 6h catches orphaned Qdrant entries.
 
-Score the 18 new garden entries listed in #56's "immediate action" section, then create the first snapshot (`python3 scripts/benchmark/create_snapshot.py v2-baseline`) to establish the reference precision. Alternatively, pick up #45 (subagent-mediated retrieval) — skill-layer work, not engine.
+## Post-Land Action Required
 
-## Open Issues
+**Run `gardenReindex()` after deploying to populate See Also metadata.** The `see_also` and `see_also_ids` fields are extracted at index time but require a reindex since existing entries were indexed without them. Without this, the #70 See Also expansion won't find adjacent entries.
 
-| # | Title | Scale | Complexity | Notes |
-|---|-------|-------|------------|-------|
-| **#45** | Subagent-mediated garden retrieval | M | Med | Skill-layer work, not engine |
-| **#57** | Snapshot pruning/rotation | S | Low | Manual `rm -rf` until then |
+## Open Issues by Epic
+
+### Epic #72 — gardenSearch quality & reliability (open)
+
+| # | Title | Repo | Effort | Notes |
+|---|-------|------|--------|-------|
+| #58 | Shadow comparison harness | engine | — | Ongoing measurement — 8 reports in `docs/comparison/shadow-session-reports.md` |
+
+### Soredium skill changes (no epic)
+
+| # | Title | Effort | Notes |
+|---|-------|--------|-------|
+| #60 | Dual garden search (grep + MCP) for comparison data | S | Skill change — run both search paths for comparison |
+| #61 | Remove dual search after evaluation | XS | After #58 concludes — depends on grep retirement decision |
+
+### Independent
+
+| # | Title | Effort | Notes |
+|---|-------|--------|-------|
+| #57 | Snapshot pruning/rotation for ~/.hortora/snapshots | S | Housekeeping script |
+| #45 | Subagent-mediated garden retrieval | M | Architecture — reduce context impact on main LLM |
+| #74 | Garden entry outcome tracking via CBR | M | Close the usage feedback loop |
+| #75 | Refactor gardenUnretrieved to use RetrievalAnalyzer | S | neocortex alignment |
+
+## Shadow Comparison Results Summary
+
+8 reports across real working sessions show consistent MCP advantage:
+
+| Scenario | MCP precision | Grep precision | Verdict |
+|----------|--------------|----------------|---------|
+| Broad domain (tmux) | 90% in top 16 | ~30% in 22 | MCP wins after #67/#68 fix |
+| Cross-project terms | 16 results | 1 result | MCP strict superset |
+| Polysemous terms (MCP, principal) | 90% in 50 | 5% in 350 | MCP categorically better |
+| Adjacent knowledge | Missed 3 critical | Found them | Grep still wins here — #70 addresses this |
+| Qdrant down | 0 | Fallback works | Grep needed as fallback (#65 adds diagnostic) |
+
+**Grep is not ready to retire.** Adjacent knowledge gap (Report 5) and Qdrant-down fallback are still real. Keep both paths.
 
 ## Key References
 
 | Resource | Location |
 |---|---|
+| Shadow session reports | `docs/comparison/shadow-session-reports.md` |
+| Epic #72 (full tracker) | `gh issue view 72 --repo Hortora/engine` |
+| Dedup scan results | `scripts/dedup-scan-results.json` |
+| Dedup scan script | `scripts/dedup_scan.py` |
 | Benchmark v2 methodology | `docs/comparison/benchmark-v2.md` |
-| Snapshot design spec | `specs/issue-56-fixed-corpus-benchmark/2026-07-29-fixed-corpus-snapshots-design.md` |
-| Design review tracker | `~/adr/hortora-engine/fixed-corpus-snapshots-20260729-015549/tracker.md` |
-| HyDE design specs | `specs/issue-50-re-enable-hyde/` |
-| Blog: The HyDE Wall | `blog/2026-07-25-mdp01-the-hyde-wall.md` |
-| Garden entry | `GE-20260725-cae3ad` — expansion harms strong retrievers |
