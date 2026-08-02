@@ -1,0 +1,9 @@
+branch: issue-75-unretrieved-pruning-cbr
+project-sha: 09a1d6ac53a9b817ce6aabc916eaa8e0d5bad275
+date: 2026-08-02
+issue: 75
+issue-repo: Hortora/engine
+covers: 75,57,74
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
