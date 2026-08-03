@@ -1,5 +1,5 @@
-# Branch Closed: issue-40-wire-hyde-query-expansion
+# Branch Closed: issue-77-startup-reconcile-defer
 
-**Date:** 2026-07-07
-**Issues:** 40
+**Date:** 2026-08-03
+**Issues:** 77
 **Status:** merged to main
