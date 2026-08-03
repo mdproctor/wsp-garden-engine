@@ -4,46 +4,28 @@
 
 ## What Just Shipped (2026-08-03)
 
-### Branch `issue-75-unretrieved-pruning-cbr` — landed on main as `1c112d8`
+**Four issues closed, one filed cross-repo.**
 
-**Three issues closed: #75, #57, #74.** 194 tests (33 new), 11 files changed, 492 insertions.
+- **#77 + #76** — Startup reconcile deferred by 60s (`delayed="60s"` on `@Scheduled`). Prevents ONNX SIGSEGV from concurrent model loading + reconcile inference. Landed as `0beb919`.
+- **#60** — Dual garden search (grep + MCP) added to 6 soredium skills for shadow comparison data collection. Soredium commit `1a96485`.
+- **#45** — Subagent-mediated garden retrieval via `garden-retriever` agent type (`~/.claude/agents/garden-retriever.md`, Haiku). 7 skill files updated. Soredium commit `b888f9d`.
+- **#78** → filed as `casehubio/neocortex#201` (batch ONNX inference). Already closed in neural-text.
 
-**#75 — gardenUnretrieved refactor:** Replaced ~40 lines of inline set-diffing with `RetrievalAnalyzer.qualitySignals()`. Adds HIGH_RETRIEVAL_LOW_QUALITY signal section (dormant until feedback data exists via #74).
+**Garden reindex complete** — 2482 points with See Also metadata populated. Manual reindex via Qdrant REST API + cursor reset (MCP client couldn't reconnect after restart).
 
-**#57 — Snapshot pruning:** `--prune` on `create_snapshot.py` with `--keep N` and `--max-age DAYS`. Both criteria apply. `--dry-run` supported. Orphan directories warned.
+## Open Issues
 
-**#74 — CBR outcome tracking:** `JpaCbrCaseMemoryStore` + H2 file-persistent at `~/.hortora/stats/cbr`. `GardenOutcomeService` stores one `TextualCbrCase` per GE-ID with store-once/record-many lifecycle. Confidence evolves via `CbrOutcome.adjustConfidence()`. MCP tool `gardenRecordOutcome` + REST `POST /api/garden/outcomes`. `gardenOutcomeReport` MCP tool + REST `GET /api/garden/outcomes/report`.
-
-## Post-Land Action Required
-
-**Run `gardenReindex()` to populate See Also metadata** (from previous branch #58). The `see_also` and `see_also_ids` fields require a reindex since existing entries were indexed without them.
-
-## Open Issues by Epic
-
-### Epic #72 — gardenSearch quality & reliability (open)
-
-| # | Title | Repo | Effort | Notes |
-|---|-------|------|--------|-------|
-| #58 | Shadow comparison harness | engine | — | Ongoing measurement |
-
-### Soredium skill changes (no epic)
-
-| # | Title | Effort | Notes |
-|---|-------|--------|-------|
-| #60 | Dual garden search (grep + MCP) for comparison data | S | Skill change |
-| #61 | Remove dual search after evaluation | XS | After #58 concludes |
-
-### Independent
-
-| # | Title | Effort | Notes |
-|---|-------|--------|-------|
-| #45 | Subagent-mediated garden retrieval | M | Architecture — reduce context impact |
+| # | Title | Scale | Complexity | Notes |
+|---|-------|-------|------------|-------|
+| #72 | Epic: gardenSearch quality & reliability | — | — | 2 open children, no active work |
+| #58 | Shadow comparison harness | — | — | Ongoing measurement, 8 reports |
+| #61 | Remove dual search | XS | Low | Blocked on #58 |
 
 ## Key References
 
 | Resource | Location |
 |---|---|
-| Design spec | `docs/specs/issue-75-unretrieved-pruning-cbr/` |
-| Blog entry | `blog/2026-08-03-mdp01-closing-the-feedback-loop.md` |
-| Shadow session reports | `docs/comparison/shadow-session-reports.md` |
-| Epic #72 | `gh issue view 72 --repo Hortora/engine` |
+| Epic #72 body | `gh issue view 72 --repo Hortora/engine` |
+| Garden retriever agent | `~/.claude/agents/garden-retriever.md` |
+| Blog entry | `blog/2026-08-03-mdp02-ops-day.md` |
+| Forage entries | `GE-20260803-e363e6` (ONNX crash), `GE-20260804-2e5ca2` (manual reindex), `GE-20260804-d7ed92` (@Scheduled fires immediately) |
