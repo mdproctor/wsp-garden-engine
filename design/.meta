@@ -1,0 +1,9 @@
+branch: issue-45-subagent-garden-retrieval
+project-sha: f84f2398b156e3755c080d5da6e5d43d1696d6ba
+date: 2026-08-03
+issue: 45
+issue-repo: Hortora/engine
+covers: 45
+flyway-next-v: unknown
+design-repo: workspace
+design-section-hashes: 
