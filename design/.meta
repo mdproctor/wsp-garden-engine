@@ -1,0 +1,10 @@
+branch: issue-83-version-deemphasis-payload-enrichment
+state: scaffolded
+project-sha: 68fc75f5823f8baaad94bc231bdeadd26a562a5a
+date: 2026-08-04
+issue: 83
+issue-repo: Hortora/engine
+covers: 83,80
+flyway-next-v: none
+design-repo: project
+design-section-hashes: 
