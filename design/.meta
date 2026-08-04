@@ -1,0 +1,10 @@
+branch: issue-79-rest-reindex-endpoint
+state: scaffolded
+project-sha: ce185580fa334597ad91b57212f5e7b131494c95
+date: 2026-08-04
+issue: 79
+issue-repo: Hortora/engine
+covers: 79
+flyway-next-v: none
+design-repo: workspace
+design-section-hashes: 
