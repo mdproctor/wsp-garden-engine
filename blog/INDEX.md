@@ -16,3 +16,4 @@
 | [2026-07-04-mdp01-three-bugs-benchmark.md](2026-07-04-mdp01-three-bugs-benchmark.md) | 2026-07-04 | Three bugs between us and a benchmark |
 | [2026-07-04-mdp02-five-lines-ten-issues.md](2026-07-04-mdp02-five-lines-ten-issues.md) | 2026-07-04 | Five lines, ten issues, one fix |
 | [2026-07-07-mdp01-reranktopn-bottleneck.md](2026-07-07-mdp01-reranktopn-bottleneck.md) | 2026-07-07 | The rerankTopN bottleneck |
+| [2026-08-04-mdp01-config-group-trap.md](2026-08-04-mdp01-config-group-trap.md) | 2026-08-04 | REST reindex endpoint plus SmallRye Config group validation trap in test properties |
