@@ -1,0 +1,10 @@
+branch: issue-85-qdrant-snapshots-installer
+state: scaffolded
+project-sha: 439e8f68c69b4ffe3d5de32585716210d4b7d158
+date: 2026-08-07
+issue: 85
+issue-repo: Hortora/engine
+covers: 85
+flyway-next-v: none
+design-repo: workspace
+design-section-hashes: 
