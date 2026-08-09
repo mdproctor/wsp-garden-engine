@@ -2,21 +2,17 @@
 
 ---
 
-## What Just Shipped (2026-08-07)
+## What Just Shipped (2026-08-09)
 
-**#80 closed — Payload enrichment.** `GardenMetadataExtractor` writes `staleness_threshold`, `tags`, `last_reviewed`, `author`, `verified_on` as Qdrant payload fields at ingestion. `SearchResult` exposes them via derived `@JsonProperty` methods in the REST API response. Null-guarded for federation-deserialized instances where metadata is null. Backfill on reindex. Grove can now read these directly without parsing entry content.
+**#85 closed — Qdrant snapshots + native installer.** New `hortora-setup.sh` with modular subcommands (`install-qdrant`, `install-models`, `install-snapshot`, `install-engine`, `status`, `uninstall`). Downloads pre-built ONNX models and Qdrant snapshot from GitHub Releases — first-time setup drops from ~90 min to download time + 2 min build. Cursor portability via `__GARDEN_PATH__` placeholder substitution. GitHub Actions `snapshot.yml` workflow builds and publishes split archives. E2E test workflow validates full cycle with 8-entry test corpus. `update-engine.sh` slimmed to `update|status|logs`. Plist templates replace hardcoded plists.
 
-**#83 closed — Version de-emphasis.** `TemporalDecayScorer` applies half-life decay by staleness tier (fast/standard/slow/evergreen). `VersionScorer` applies BOM-relative version distance with topic weighting. Both wired into `SearchResource.applyScoring()`, configurable via `SearchScoringConfig`. `SearchProfileStore` (SQLite) + `ProfileResource` (REST CRUD) for named BOM snapshots. `gardenSearch` MCP tool accepts `profile` and `stack` params. Client-side BOM resolution script and hook.
-
-**Embedding cache enabled** for `HybridSearchProducer` via `CachingMultiModalEmbedder`.
-
-**Garden entry:** `GE-20260807-9a4872` — Jackson `@JsonIgnore` on record component passes null during deserialization, causing NPE in derived `@JsonProperty` methods.
+**Garden entries:** `GE-20260809-056ccb` (cursor path portability gotcha), `GE-20260809-903561` (GitHub Release tag overwrite race).
 
 ## What's Next
 
 | # | Description | Scale | Complexity | Notes |
 |---|-------------|-------|------------|-------|
-| #85 | Qdrant snapshots + native installer | L | High | End-user setup solution |
+| — | Run `snapshot.yml` workflow_dispatch with `corpus=test` | — | — | First CI validation |
 | #84 | ClaudeAgentClient crashes when claude CLI missing | XS | Low | — |
 | #82 | Investigate alternatives to global OrtSession lock | M | High | Future improvement |
 | #72 | Epic: gardenSearch quality & reliability | — | — | 2 open children |
@@ -27,6 +23,6 @@
 
 | Resource | Location |
 |---|---|
-| Design specs | `docs/specs/issue-83-version-deemphasis-payload-enrichment/` |
-| Diary entry | `blog/2026-08-07-mdp01-invisible-payload.md` |
-| Garden entry | `GE-20260807-9a4872` (Jackson @JsonIgnore null on records) |
+| Design spec | `docs/specs/issue-85-qdrant-snapshots-installer/` |
+| Diary entry | `blog/2026-08-09-mdp01-instant-setup.md` |
+| Garden entries | `GE-20260809-056ccb`, `GE-20260809-903561` |
